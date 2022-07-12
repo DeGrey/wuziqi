@@ -11,21 +11,25 @@
 
 #define MAX_USER_NUMBER 200
 #define MAX_MSG_SIZE 200
+#define MAX_CLIENT_NAME 10
 
 #define NOT_USED 0
+#define SET_ID 100
 #define CHAT_TO_SB 101
 #define CHAT_TO_EB 102
+
+#define LOGIN "login"
 
 pthread_mutex_t  Msg_process;
 
 
-struct Client_info
-{
-    int socket;
-    char* nickname;
-};
+// struct Client_info
+// {
+//     int socket;
+//     char* nickname;//[MAX_CLIENT_NAME];
+// };
 
-struct Client_info* selfInfo;
+
 
 struct Msg_info
 {

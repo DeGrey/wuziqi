@@ -17,6 +17,7 @@
 #define MAX_MSG_SIZE 200
 
 #define NOT_USED 0
+#define SET_ID 100
 #define CHAT_TO_SB 101
 #define CHAT_TO_EB 102
 

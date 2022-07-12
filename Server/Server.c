@@ -45,29 +45,7 @@ void RecvFmClient(void *param)
     }
 }
 
-void WaitForUser(void *param)
-{
-    long socket_handle = (long)param;
-    pthread_t thread_Recv;
-    while (1)
-    {
 
-        struct sockaddr_in Ip_port;
-        unsigned int whattouse;
-        memset(&Ip_port, 0, sizeof(struct sockaddr_in));
-        memset(&UsersInfo[id], 0, sizeof(struct User_info));
-
-        if (-1 == (UsersInfo[id].handle_socket = accept(socket_handle, (struct sockaddr *)&Ip_port, &whattouse)))
-        {
-            printf("accept:用户%d连接失败！\n", id);
-            continue;
-        }
-        UsersInfo[id].port = Ip_port.sin_port;
-        UsersInfo[id].address = inet_ntoa(Ip_port.sin_addr);
-        // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
-        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id++].handle_socket);
-    }
-}
 
 void Send_Msg(int handle_socket, char *Msg, int len)
 {
@@ -108,6 +86,32 @@ void SendaMsg(char *data, bool type, int handle_socket, int MSG_type)
     else
     {
         SendToClient(handle_socket, data, strlen(data), MSG_type);
+    }
+}
+
+void WaitForUser(void *param)
+{
+    long socket_handle = (long)param;
+    pthread_t thread_Recv;
+    while (1)
+    {
+
+        struct sockaddr_in Ip_port;
+        unsigned int whattouse;
+        memset(&Ip_port, 0, sizeof(struct sockaddr_in));
+        memset(&UsersInfo[id], 0, sizeof(struct User_info));
+
+        if (-1 == (UsersInfo[id].handle_socket = accept(socket_handle, (struct sockaddr *)&Ip_port, &whattouse)))
+        {
+            printf("accept:用户%d连接失败！\n", id);
+            continue;
+        }
+        UsersInfo[id].port = Ip_port.sin_port;
+        UsersInfo[id].address = inet_ntoa(Ip_port.sin_addr);
+        // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
+        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id].handle_socket);
+
+        SendaMsg("",false,UsersInfo[id++].handle_socket,SET_ID);
     }
 }
 

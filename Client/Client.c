@@ -1,6 +1,8 @@
 #include "Client.h"
 
 int handle_socket = 0;
+char* nickname={0};
+int socket_atServer=0;
 void contoserver(char *address, int port)
 {
     int res_socket;
@@ -42,7 +44,7 @@ void SendToServer(char *data, int len, int socket, int type)
     MsgInfo.type = type;
     MsgInfo.len = len;
     MsgInfo.handle_socket = socket;
-    MsgInfo.nickname = selfInfo->nickname;
+    MsgInfo.nickname = nickname;
 
     strcpy(MsgInfo.data, data);
 
@@ -102,9 +104,15 @@ void ProcessMsg(void)
             }
             case CHAT_TO_SB:
             {
-                printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, selfInfo->nickname, Msg_list->next->next->Msginfo.data);
+                printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, nickname, Msg_list->next->next->Msginfo.data);
                 // SendaMsg(Msg_list->next->next->Msginfo.data, false, Msg_list->next->next->Msginfo.handle_socket);
                 // list_pop(Msg_list->next->next);
+                break;
+            }
+            case SET_ID:
+            {
+               socket_atServer=Msg_list->next->next->Msginfo.handle_socket;
+               printf("得到ID：%d\n",socket_atServer);
                 break;
             }
 
@@ -121,30 +129,47 @@ void ProcessMsg(void)
 
 void PreProcess(char *cmd, int socket, char *Msg)
 {
+    if(cmd==LOGIN)
+    {
+
+    }
     if (!socket)
-        SendToServer(Msg, strlen(cmd), 0, CHAT_TO_EB);
+        SendToServer(Msg, strlen(Msg), 0, CHAT_TO_EB);
     else
-        SendToServer(Msg, strlen(cmd), socket, CHAT_TO_SB);
+        SendToServer(Msg, strlen(Msg), socket, CHAT_TO_SB);
 }
 
-int main()
+int main(int argc,char* argv[])//int argc,char* argv[],char* envp[]
 {
+    nickname=argv[1];
+        
+    printf("正在连接服务器...\n");
+
     pthread_t thread_Recv, thread_proMsg;
     list_init();
     pthread_mutex_init(&Msg_process, NULL);
 
     contoserver("127.0.0.1", 2000);
 
+    printf("连接成功！\n正在分配ID...\n");
+
     pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
+
+    while(!socket_atServer)
+    {
+        
+    }
+    printf("正在连接大厅...\n");
+    printf("%s(ID：%d)  \n",nickname,socket_atServer);
 
     while (1)
     {
         char cmd[100];
-        int obj[100];
+        int obj;
         char msg[MAX_MSG_SIZE];
 
-        scanf("%s %d %s", cmd, obj, msg);
+        scanf("%s %d %s", cmd, &obj, msg);
         PreProcess(cmd, obj, msg);
     }
 
