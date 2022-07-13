@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #define MAX_USER_NUMBER 200
 #define MAX_MSG_SIZE 200
@@ -21,14 +22,6 @@
 #define LOGIN "login"
 
 pthread_mutex_t  Msg_process;
-
-
-// struct Client_info
-// {
-//     int socket;
-//     char* nickname;//[MAX_CLIENT_NAME];
-// };
-
 
 
 struct Msg_info

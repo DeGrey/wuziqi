@@ -35,8 +35,9 @@ struct Msg_info
 {
     int type;
     int len;
+    char* nickname;
     int handle_socket;
-    char data[MAX_MSG_SIZE];
+    char  data[MAX_MSG_SIZE];
 };
 
 struct node

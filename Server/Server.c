@@ -37,15 +37,13 @@ void RecvFmClient(void *param)
 
             struct node *anode = (struct node *)malloc(sizeof(struct node));
             anode->Msginfo = MsgInfo;
-            
+
             pthread_mutex_lock(&Msg_process);
             list_push(anode);
             pthread_mutex_unlock(&Msg_process);
         }
     }
 }
-
-
 
 void Send_Msg(int handle_socket, char *Msg, int len)
 {
@@ -68,7 +66,7 @@ void SendToClient(int handle_socket, char *data, int len, int type)
     struct Msg_info MsgInfo = {0};
     MsgInfo.type = type;
     MsgInfo.len = len;
-    MsgInfo.handle_socket=0;
+    MsgInfo.handle_socket = 0;
     strcpy(MsgInfo.data, data);
 
     Send_Msg(handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
@@ -110,8 +108,9 @@ void WaitForUser(void *param)
         UsersInfo[id].address = inet_ntoa(Ip_port.sin_addr);
         // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
         pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id].handle_socket);
-
-        SendaMsg("",false,UsersInfo[id++].handle_socket,SET_ID);
+        
+        printf("用户 ID:%d 已连接\n",UsersInfo[id].handle_socket);
+        SendaMsg("", false, UsersInfo[id++].handle_socket, SET_ID);
     }
 }
 
@@ -122,7 +121,7 @@ void ProcessMsg(void)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
-           // printf("开始处理\n");
+            // printf("开始处理\n");
             switch (Msg_list->next->next->Msginfo.type)
             {
             case CHAT_TO_EB:
@@ -144,19 +143,18 @@ void ProcessMsg(void)
             pthread_mutex_lock(&Msg_process);
             list_pop(Msg_list->next->next);
             pthread_mutex_unlock(&Msg_process);
-
         }
     }
 }
 
-void Server_init(char *address, int port)
+bool Server_init(char *address, int port)
 {
     int res_socket;
     // pthread_t thread_accept;
     if ((res_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         printf("socket:服务器启动失败！\n");
-        return;
+        return false;
     }
 
     struct sockaddr_in ipv4;
@@ -168,25 +166,27 @@ void Server_init(char *address, int port)
     if (-1 == bind(res_socket, (struct sockaddr *)&ipv4, sizeof(struct sockaddr_in)))
     {
         printf("bind:服务器启动失败！\n");
-        return;
+        return false;
     }
 
     if (-1 == listen(res_socket, __INT_MAX__))
     {
         printf("listen:服务器启动失败！\n");
-        return;
+        return false;
     }
 
     pthread_create(&thread_accept, NULL, (void *)&WaitForUser, (void *)(long)res_socket);
+    return true;
 }
 
 int main()
 {
     list_init();
     pthread_t processMsg;
-    pthread_mutex_init(&Msg_process,NULL);
+    pthread_mutex_init(&Msg_process, NULL);
 
-    Server_init("127.0.0.1", 2000);
+    if (!Server_init("127.0.0.1", 2000))
+        return 0;
 
     pthread_create(&processMsg, NULL, (void *)&ProcessMsg, NULL);
 
@@ -194,7 +194,7 @@ int main()
     {
         char test[200];
         scanf("%s", test);
-        SendaMsg(test, true, 0,CHAT_TO_EB);
+        SendaMsg(test, true, 0, CHAT_TO_EB);
     }
 
     pthread_join(thread_accept, NULL);
