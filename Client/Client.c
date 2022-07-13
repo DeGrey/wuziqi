@@ -156,10 +156,10 @@ int main(int argc,char* argv[])//int argc,char* argv[],char* envp[]
     pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    while(!socket_atServer)
-    {
+    // while(!socket_atServer)
+    // {
         
-    }
+    // }
     printf("正在连接大厅...\n");
     printf("%s(ID：%d)  \n",nickname,socket_atServer);
 
