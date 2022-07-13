@@ -3,6 +3,7 @@
 int handle_socket = 0;
 char *nickname = {0};
 int socket_atServer = 0;
+
 bool contoserver(char *address, int port)
 {
     int res_socket;
@@ -40,20 +41,19 @@ void Send_Msg(char *Msg, int len)
     }
 }
 
-void SendToServer(char *data, int len, int socket, int type)
+void SendToServer(struct Msg_info* MsgInfo)//(char *data, int socket_self, int type,int socket_other)
 {
-    struct Msg_info MsgInfo = {0};
-    MsgInfo.type = type;
-    MsgInfo.len = len;
-    MsgInfo.handle_socket = socket;
-    MsgInfo.nickname = nickname;
+    // struct Msg_info MsgInfo = {0};
+    // MsgInfo.type = type;
+    // MsgInfo.socket_self=socket_self;
+    // MsgInfo.socket_other=socket_other;
+    // MsgInfo.nickname = nickname;
+    // strcpy(MsgInfo.data, data);
 
-    strcpy(MsgInfo.data, data);
-
-    Send_Msg((char *)&MsgInfo, sizeof(struct Msg_info));
+    Send_Msg((char *)MsgInfo, sizeof(struct Msg_info));
 }
 
-void Recv_Msg(int handle_socket, char *Msg, int len)
+void Recv_Msg(char *Msg, int len)
 {
 
     int offset = 0, res = 0;
@@ -74,9 +74,9 @@ void RecvFmClient(void)
     while (1)
     {
         struct Msg_info MsgInfo = {0};
-        Recv_Msg(handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
+        Recv_Msg((char *)&MsgInfo, sizeof(struct Msg_info));
 
-        if (MsgInfo.len > 0)
+        if (MsgInfo.type!=NOT_USED)
         {
             struct node *anode = (struct node *)malloc(sizeof(struct node));
             anode->Msginfo = MsgInfo;
@@ -95,6 +95,7 @@ printf("消息处理已开启\n");
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
+            printf("收到消息了\n");
             switch (Msg_list->next->next->Msginfo.type)
             {
             case CHAT_TO_EB:
@@ -114,7 +115,7 @@ printf("消息处理已开启\n");
             }
             case SET_ID:
             {
-                socket_atServer = Msg_list->next->next->Msginfo.handle_socket;
+                socket_atServer = Msg_list->next->next->Msginfo.socket_other;
                 printf("得到ID：%d\n", socket_atServer);
 
                 break;
@@ -131,16 +132,28 @@ printf("消息处理已开启\n");
     }
 }
 
-void PreProcess(char *cmd, int socket, char *Msg)
+void PreProcess(char *cmd, int socket_other,char*data)
 {
-    if (NOT_USED == strcmp(cmd, "chat"))
+    struct Msg_info* MsgInfo;
+    if (0 == strcmp(cmd, "chat"))
     {
-        printf("cmd==chat\n");
-        if (NOT_USED == socket)
-            SendToServer(Msg, strlen(Msg), 0, CHAT_TO_EB);
+        if(NOT_USED==socket_other)
+        MsgInfo=MakeMsg(CHAT_TO_EB,nickname,socket_atServer,socket_other,data);
         else
-            SendToServer(Msg, strlen(Msg), socket, CHAT_TO_SB);
+        MsgInfo=MakeMsg(CHAT_TO_SB,nickname,socket_atServer,socket_other,data);
+
+        //printf("cmd==chat\n");
+        //if (NOT_USED == socket)
+            //SendToServer(MsgInfo);//(Msg,socket_atServer,CHAT_TO_EB,socket_Sb);
+        // else
+        //     SendToServer(MsgInfo);//(Msg,socket_atServer,CHAT_TO_SB,socket_Sb);
     }
+    if(0 == strcmp(cmd, "getid"))
+    {
+        //SendToServer(MsgInfo);//(Msg,NOT_USED,SET_ID,socket_Sb);
+    }
+
+    SendToServer(MsgInfo);
 }
 
 int main(int argc, char *argv[]) // int argc,char* argv[],char* envp[]
@@ -150,19 +163,22 @@ int main(int argc, char *argv[]) // int argc,char* argv[],char* envp[]
 
     printf("正在连接服务器...\n");
 
-    pthread_t thread_Recv, thread_proMsg;
+
     list_init();
     pthread_mutex_init(&Msg_process, NULL);
 
     if (!contoserver("127.0.0.1", 2000))
-        //return 0;
+        return 0;
 
     printf("连接成功！\n正在分配ID...\n");
 
-pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
-    //pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
+
+    pthread_t thread_Recv, thread_proMsg;
+    pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
+
+    //PreProcess("getid",handle_socket,"");
     // while(!socket_atServer)
     // {
 

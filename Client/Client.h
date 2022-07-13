@@ -27,11 +27,25 @@ pthread_mutex_t  Msg_process;
 struct Msg_info
 {
     int type;
-    int len;
+    //int len;
     char* nickname;
-    int handle_socket;
+    int socket_self;
+    int socket_other;
     char  data[MAX_MSG_SIZE];
 };
+
+
+struct Msg_info *MakeMsg(int type,char*nickname,int socket_self,int socket_other,char* data)
+{
+    struct Msg_info *Msg=(struct Msg_info*)malloc(sizeof(struct Msg_info));
+    Msg->type=type;
+    Msg->nickname=nickname;
+    Msg->socket_other=socket_other;
+    Msg->socket_self=socket_self;
+    strcpy(Msg->data,data);
+
+    return Msg;
+}
 
 struct node
 {

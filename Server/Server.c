@@ -6,6 +6,8 @@ pthread_t thread_accept;
 // pthread_t thread_Recv[MAX_USER_NUMBER];
 int id = 0, M_D_list = 0;
 
+
+
 void Recv_Msg(int handle_socket, char *Msg, int len)
 {
 
@@ -31,7 +33,7 @@ void RecvFmClient(void *param)
         memset(&MsgInfo, 0, sizeof(MsgInfo));
         Recv_Msg(handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
 
-        if (MsgInfo.len > 0)
+        if (MsgInfo.type != NOT_USED)
         {
             // printf("handle_socket：%d,Client：%s,id:%d\n",handle_socket, MsgInfo.data,id);
 
@@ -61,29 +63,33 @@ void Send_Msg(int handle_socket, char *Msg, int len)
     }
 }
 
-void SendToClient(int handle_socket, char *data, int len, int type)
-{
-    struct Msg_info MsgInfo = {0};
-    MsgInfo.type = type;
-    MsgInfo.len = len;
-    MsgInfo.handle_socket = 0;
-    strcpy(MsgInfo.data, data);
+// void SendToClient(struct Msg_info MsgInfo)//(char *data, int socket_self, int type,int socket_other,char*nickname)
+// {
+//     // struct Msg_info MsgInfo = {0};
+//     // MsgInfo.type = type;
+//     // //MsgInfo.len = len;
+//     // MsgInfo.socket_self=socket_self;
+//     // MsgInfo.socket_other = socket_other;
+//     // MsgInfo.nickname=nickname;
+//     // strcpy(MsgInfo.data, data);
 
-    Send_Msg(handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
-}
+//     Send_Msg(MsgInfo.socket_other, (char *)&MsgInfo, sizeof(struct Msg_info));
+// }
 
-void SendaMsg(char *data, bool type, int handle_socket, int MSG_type)
+void SendaMsg(bool SenDtype, struct Msg_info* MsgInfo)
 {
-    if (type)
+    if (SenDtype)
     {
         for (int i = 0; i < id; i++)
         {
-            SendToClient(UsersInfo[i].handle_socket, data, strlen(data), MSG_type);
+            //SendToClient(MsgInfo);
+            Send_Msg(UsersInfo[i].handle_socket, (char *)MsgInfo, sizeof(struct Msg_info));
+
         }
     }
     else
     {
-        SendToClient(handle_socket, data, strlen(data), MSG_type);
+        Send_Msg(MsgInfo->socket_other, (char *)MsgInfo, sizeof(struct Msg_info));
     }
 }
 
@@ -107,11 +113,17 @@ void WaitForUser(void *param)
         UsersInfo[id].port = Ip_port.sin_port;
         UsersInfo[id].address = inet_ntoa(Ip_port.sin_addr);
         // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
-        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id].handle_socket);
+        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id++].handle_socket);
         
-        printf("用户 ID:%d 已连接\n",UsersInfo[id].handle_socket);
-        SendaMsg("", false, UsersInfo[id++].handle_socket, SET_ID);
+        //printf("用户 ID:%d 已连接\n",UsersInfo[id].handle_socket);
+        //SendaMsg("", false, UsersInfo[id++].handle_socket, SET_ID);
+        
     }
+}
+
+int getID()
+{
+
 }
 
 void ProcessMsg(void)
@@ -121,17 +133,25 @@ void ProcessMsg(void)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
-            // printf("开始处理\n");
+            printf("受到client消息\n");
             switch (Msg_list->next->next->Msginfo.type)
             {
             case CHAT_TO_EB:
             {
-                SendaMsg(Msg_list->next->next->Msginfo.data, true, 0, CHAT_TO_EB);
+                //SendaMsg(Msg_list->next->next->Msginfo.data, true, 0, CHAT_TO_EB);
+                SendaMsg(true,&Msg_list->next->next->Msginfo);
                 break;
             }
             case CHAT_TO_SB:
             {
-                SendaMsg(Msg_list->next->next->Msginfo.data, false, Msg_list->next->next->Msginfo.handle_socket, CHAT_TO_SB);
+                //SendaMsg(Msg_list->next->next->Msginfo.data, false, Msg_list->next->next->Msginfo.handle_socket, CHAT_TO_SB);
+                SendaMsg(false,&Msg_list->next->next->Msginfo);
+                // list_pop(Msg_list->next->next);
+                break;
+            }
+            case SET_ID:
+            {
+                //SendaMsg("",false, Msg_list->next->next->Msginfo.handle_socket, SET_ID);
                 // list_pop(Msg_list->next->next);
                 break;
             }
@@ -194,7 +214,7 @@ int main()
     {
         char test[200];
         scanf("%s", test);
-        SendaMsg(test, true, 0, CHAT_TO_EB);
+        SendaMsg(true,MakeMsg(CHAT_TO_EB,"system",0,0,test));
     }
 
     pthread_join(thread_accept, NULL);
