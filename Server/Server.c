@@ -76,20 +76,20 @@ void Send_Msg(int handle_socket, char *Msg, int len)
 //     Send_Msg(MsgInfo.socket_other, (char *)&MsgInfo, sizeof(struct Msg_info));
 // }
 
-void SendaMsg(bool SenDtype, struct Msg_info* MsgInfo)
+void SendaMsg(bool SenDtype, struct Msg_info MsgInfo)
 {
     if (SenDtype)
     {
         for (int i = 0; i < id; i++)
         {
             //SendToClient(MsgInfo);
-            Send_Msg(UsersInfo[i].handle_socket, (char *)MsgInfo, sizeof(struct Msg_info));
+            Send_Msg(UsersInfo[i].handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
 
         }
     }
     else
     {
-        Send_Msg(MsgInfo->socket_other, (char *)MsgInfo, sizeof(struct Msg_info));
+        Send_Msg(MsgInfo.socket_other, (char *)&MsgInfo, sizeof(struct Msg_info));
     }
 }
 
@@ -139,13 +139,13 @@ void ProcessMsg(void)
             case CHAT_TO_EB:
             {
                 //SendaMsg(Msg_list->next->next->Msginfo.data, true, 0, CHAT_TO_EB);
-                SendaMsg(true,&Msg_list->next->next->Msginfo);
+                SendaMsg(true,Msg_list->next->next->Msginfo);
                 break;
             }
             case CHAT_TO_SB:
             {
                 //SendaMsg(Msg_list->next->next->Msginfo.data, false, Msg_list->next->next->Msginfo.handle_socket, CHAT_TO_SB);
-                SendaMsg(false,&Msg_list->next->next->Msginfo);
+                SendaMsg(false,Msg_list->next->next->Msginfo);
                 // list_pop(Msg_list->next->next);
                 break;
             }
@@ -204,6 +204,7 @@ int main()
     list_init();
     pthread_t processMsg;
     pthread_mutex_init(&Msg_process, NULL);
+    struct Msg_info Msg={0};
 
     if (!Server_init("127.0.0.1", 2000))
         return 0;
@@ -214,7 +215,8 @@ int main()
     {
         char test[200];
         scanf("%s", test);
-        SendaMsg(true,MakeMsg(CHAT_TO_EB,"system",0,0,test));
+        MakeMsg(&Msg,CHAT_TO_EB,"system",0,0,test);
+        SendaMsg(true,Msg);
     }
 
     pthread_join(thread_accept, NULL);

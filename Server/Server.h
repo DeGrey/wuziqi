@@ -35,22 +35,23 @@ struct Msg_info
 {
     int type;
     //int len;
-    char* nickname;
+    char  nickname[MAX_MSG_SIZE];
     int socket_self;
     int socket_other;
     char  data[MAX_MSG_SIZE];
 };
 
-struct Msg_info *MakeMsg(int type,char*nickname,int socket_self,int socket_other,char* data)
+void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
 {
-    struct Msg_info *Msg=(struct Msg_info*)malloc(sizeof(struct Msg_info));
+
     Msg->type=type;
-    Msg->nickname=nickname;
+    //Msg->nickname=nickname;
     Msg->socket_other=socket_other;
     Msg->socket_self=socket_self;
+    strcpy(Msg->nickname,nickname);
     strcpy(Msg->data,data);
 
-    return Msg;
+    return ;
 }
 
 struct node
