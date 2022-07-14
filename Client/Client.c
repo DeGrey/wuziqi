@@ -205,6 +205,6 @@ int main(int argc, char *argv[])
 
     InitBoard();
 
-
+while(1);
     return 0;
 }

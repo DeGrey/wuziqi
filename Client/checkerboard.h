@@ -35,8 +35,8 @@
 #define HIGHT_LIGHT() printf("\033[7m")
 #define UN_HIGHT_LIGHT() printf("\033[27m")
 
+#define BOARD_SIZE 20
 
-struct winsize size;
 
 void InitBoard();
 void UpdateBoard(int col,int row);
