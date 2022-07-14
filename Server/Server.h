@@ -20,6 +20,8 @@
 #define SET_ID 100
 #define CHAT_TO_SB 101
 #define CHAT_TO_EB 102
+#define ID_ACK 103
+
 
 pthread_mutex_t  Msg_process;
 
@@ -43,7 +45,6 @@ struct Msg_info
 
 void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
 {
-
     Msg->type=type;
     //Msg->nickname=nickname;
     Msg->socket_other=socket_other;

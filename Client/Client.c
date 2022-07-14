@@ -49,7 +49,6 @@ void SendToServer(struct Msg_info MsgInfo) //(char *data, int socket_self, int t
     // MsgInfo.socket_other=socket_other;
     // MsgInfo.nickname = nickname;
     // strcpy(MsgInfo.data, data);
-printf("start sendtoserver\n");
     Send_Msg((char *)&MsgInfo, sizeof(struct Msg_info));
 }
 
@@ -70,7 +69,7 @@ void Recv_Msg(char *Msg, int len)
 
 void RecvFmClient(void)
 {
-    printf("消息接受已打开\n");
+    // printf("消息接受已打开\n");
     while (1)
     {
         struct Msg_info MsgInfo = {0};
@@ -90,33 +89,34 @@ void RecvFmClient(void)
 
 void ProcessMsg(void)
 {
-    printf("消息处理已开启\n");
+    // printf("消息处理已开启\n");
     while (1)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
-            printf("收到消息了\n");
+            // printf("收到消息了\n");
             switch (Msg_list->next->next->Msginfo.type)
             {
             case CHAT_TO_EB:
             {
-                // SendaMsg(Msg_list->next->next->Msginfo.data, true, 0);
-
                 printf("%s：%s\n", Msg_list->next->next->Msginfo.nickname, Msg_list->next->next->Msginfo.data);
-                // list_pop(Msg_list->next->next);
                 break;
             }
             case CHAT_TO_SB:
             {
                 printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, nickname, Msg_list->next->next->Msginfo.data);
-                // SendaMsg(Msg_list->next->next->Msginfo.data, false, Msg_list->next->next->Msginfo.handle_socket);
-                // list_pop(Msg_list->next->next);
                 break;
             }
             case SET_ID:
             {
-                socket_atServer = Msg_list->next->next->Msginfo.socket_other;
-                printf("得到ID：%d\n", socket_atServer);
+
+                if (socket_atServer == NOT_USED)
+                {
+                    socket_atServer = Msg_list->next->next->Msginfo.socket_other;
+                    Msg_list->next->next->Msginfo.type = ID_ACK;
+                    SendToServer(Msg_list->next->next->Msginfo);
+                    printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
+                }
 
                 break;
             }
@@ -134,31 +134,30 @@ void ProcessMsg(void)
 
 void PreProcess(char *cmd, int socket_other, char *data)
 {
-    struct Msg_info MsgInfo={0};
+    struct Msg_info MsgInfo = {0};
     if (0 == strcmp(cmd, "chat"))
     {
-        printf("进入chat命令\n");
         if (NOT_USED == socket_other)
             MakeMsg(&MsgInfo, CHAT_TO_EB, nickname, socket_atServer, socket_other, data);
 
         else
             MakeMsg(&MsgInfo, CHAT_TO_SB, nickname, socket_atServer, socket_other, data);
-
-        // printf("cmd==chat\n");
-        // if (NOT_USED == socket)
-        // SendToServer(MsgInfo);//(Msg,socket_atServer,CHAT_TO_EB,socket_Sb);
-        // else
-        //     SendToServer(MsgInfo);//(Msg,socket_atServer,CHAT_TO_SB,socket_Sb);
     }
-    if (0 == strcmp(cmd, "getid"))
+
+    else if (0 == strcmp(cmd, "getid"))
     {
-        // SendToServer(MsgInfo);//(Msg,NOT_USED,SET_ID,socket_Sb);
+    }
+
+    else
+    {
+        printf("找不到命令：%s\n", cmd);
+        return;
     }
 
     SendToServer(MsgInfo);
 }
 
-int main(int argc, char *argv[]) // int argc,char* argv[],char* envp[]
+int main(int argc, char *argv[])
 {
     nickname = (char *)malloc(sizeof(char));
     strcpy(nickname, argv[1]);
@@ -169,7 +168,9 @@ int main(int argc, char *argv[]) // int argc,char* argv[],char* envp[]
     pthread_mutex_init(&Msg_process, NULL);
 
     if (!contoserver("127.0.0.1", 2000))
-        return 0;
+    {
+        // return 0;
+    }
 
     printf("连接成功！\n正在分配ID...\n");
 
@@ -177,22 +178,21 @@ int main(int argc, char *argv[]) // int argc,char* argv[],char* envp[]
     pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    // PreProcess("getid",handle_socket,"");
-    //  while(!socket_atServer)
-    //  {
-
-    // }
     printf("正在连接大厅...\n");
-    printf("%s(ID：%d)  \n", nickname, socket_atServer);
 
     while (1)
     {
-        char cmd[100];
-        int obj;
-        char msg[MAX_MSG_SIZE];
 
-        scanf("%s %d %s", cmd, &obj, msg);
-        // printf("%s %d %s", cmd, obj, msg);
+        char cmd[100];
+        int obj = -1;
+        char msg[MAX_MSG_SIZE] = "";
+
+        scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
+        if (NOT_USED == socket_atServer)
+            continue;
+        if (obj <0)
+            continue;
+
         PreProcess(cmd, obj, msg);
     }
 
