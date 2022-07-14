@@ -5,7 +5,7 @@ struct User_info UsersInfo[MAX_USER_NUMBER];
 pthread_t thread_accept;
 // pthread_t thread_Recv[MAX_USER_NUMBER];
 int id = 0, M_D_list = 0;
-bool Send_ID=false;
+bool Send_ID = false;
 
 void Recv_Msg(int handle_socket, char *Msg, int len)
 {
@@ -100,7 +100,7 @@ void SetID(void *param)
         MakeMsg(&Msg, SET_ID, "system(0)", 0, ssocket_set, "setid");
         SendaMsg(false, Msg);
     }
-    //printf("ID set sucessed\n");
+    // printf("ID set sucessed\n");
 }
 
 void WaitForUser(void *param)
@@ -125,12 +125,8 @@ void WaitForUser(void *param)
         // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
         pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)(long)UsersInfo[id].handle_socket);
 
-        pthread_create(&setid,NULL,(void*)&SetID,(void *)(long)UsersInfo[id++].handle_socket);
+        pthread_create(&setid, NULL, (void *)&SetID, (void *)(long)UsersInfo[id++].handle_socket);
     }
-}
-
-int getID()
-{
 }
 
 void ProcessMsg(void)
@@ -140,7 +136,7 @@ void ProcessMsg(void)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
-            //printf("收到client消息\n");
+            // printf("收到client消息\n");
             switch (Msg_list->next->next->Msginfo.type)
             {
             case CHAT_TO_EB:
@@ -158,7 +154,11 @@ void ProcessMsg(void)
             }
             case ID_ACK:
             {
-                Send_ID=true;
+                Send_ID = true;
+                break;
+            }
+            case START_MATCH:
+            {
                 break;
             }
 

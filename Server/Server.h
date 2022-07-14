@@ -18,9 +18,11 @@
 
 #define NOT_USED 0
 #define SET_ID 100
-#define CHAT_TO_SB 101
-#define CHAT_TO_EB 102
-#define ID_ACK 103
+#define ID_ACK 101
+#define CHAT_TO_SB 102
+#define CHAT_TO_EB 103
+#define START_MATCH 104
+#define MATCH_ACK 105
 
 
 pthread_mutex_t  Msg_process;

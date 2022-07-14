@@ -1,7 +1,8 @@
 #include "Client.h"
+#include"checkerboard.h"
 
 int handle_socket = 0;
-char *nickname = {0};
+char *nickname;
 int socket_atServer = 0;
 
 bool contoserver(char *address, int port)
@@ -109,7 +110,6 @@ void ProcessMsg(void)
             }
             case SET_ID:
             {
-
                 if (socket_atServer == NOT_USED)
                 {
                     socket_atServer = Msg_list->next->next->Msginfo.socket_other;
@@ -117,6 +117,10 @@ void ProcessMsg(void)
                     SendToServer(Msg_list->next->next->Msginfo);
                     printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
                 }
+                break;
+            }
+            case MATCH_ACK:
+            {
 
                 break;
             }
@@ -159,45 +163,48 @@ void PreProcess(char *cmd, int socket_other, char *data)
 
 int main(int argc, char *argv[])
 {
-    nickname = (char *)malloc(sizeof(char));
-    strcpy(nickname, argv[1]);
+    // nickname = (char *)malloc(sizeof(char));
+    // strcpy(nickname, argv[1]);
 
-    printf("正在连接服务器...\n");
+    // printf("正在连接服务器...\n");
 
-    list_init();
-    pthread_mutex_init(&Msg_process, NULL);
+    // list_init();
+    // pthread_mutex_init(&Msg_process, NULL);
 
-    if (!contoserver("127.0.0.1", 2000))
-    {
-        // return 0;
-    }
+    // if (!contoserver("127.0.0.1", 2000))
+    // {
+    //     // return 0;
+    // }
 
-    printf("连接成功！\n正在分配ID...\n");
+    // printf("连接成功！\n正在分配ID...\n");
 
-    pthread_t thread_Recv, thread_proMsg;
-    pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
-    pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
+    // pthread_t thread_Recv, thread_proMsg;
+    // pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
+    // pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    printf("正在连接大厅...\n");
+    // printf("正在连接大厅...\n");
 
-    while (1)
-    {
+    // while (1)
+    // {
 
-        char cmd[100];
-        int obj = -1;
-        char msg[MAX_MSG_SIZE] = "";
+    //     char cmd[100];
+    //     int obj = -1;
+    //     char msg[MAX_MSG_SIZE] = "";
 
-        scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
-        if (NOT_USED == socket_atServer)
-            continue;
-        if (obj <0)
-            continue;
+    //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
+    //     if (NOT_USED == socket_atServer)
+    //         continue;
+    //     if (obj <0)
+    //         continue;
 
-        PreProcess(cmd, obj, msg);
-    }
+    //     PreProcess(cmd, obj, msg);
+    // }
 
-    pthread_join(thread_Recv, NULL);
-    pthread_join(thread_proMsg, NULL);
+    // pthread_join(thread_Recv, NULL);
+    // pthread_join(thread_proMsg, NULL);
+
+    InitBoard();
+
 
     return 0;
 }

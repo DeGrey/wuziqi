@@ -10,19 +10,23 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+
 #define MAX_USER_NUMBER 200
 #define MAX_MSG_SIZE 200
 #define MAX_CLIENT_NAME 10
 
 #define NOT_USED 0
 #define SET_ID 100
-#define CHAT_TO_SB 101
-#define CHAT_TO_EB 102
-#define ID_ACK 103
+#define ID_ACK 101
+#define CHAT_TO_SB 102
+#define CHAT_TO_EB 103
+#define START_MATCH 104
+#define MATCH_ACK 105
 
 #define LOGIN "login"
 
 pthread_mutex_t  Msg_process;
+
 
 
 struct Msg_info
