@@ -3,17 +3,32 @@
 void InitBoard()
 {
     ioctl(STDIN_FILENO,TIOCGWINSZ,&size);
-    printf("col:%d\trow:%d\n",size.ws_col,size.ws_row);
+    //printf("col:%d\trow:%d\n",size.ws_col,size.ws_row);
 
     //MOVETO(70,20);
-    for(int i=1;i<size.ws_row;i++)
+    for(int i=0;i<size.ws_row;i++)
     {
-        for(int k=0;k<size.ws_col;k+=2)
+        for(int k=0;k<size.ws_col;k+=1)
         {
-            printf(" ⊹");
+            if(i=0)
+            {
+                printf(" ");
+                continue;
+            }
+            if(k==5)
+            {
+                printf("⚫");
+                continue;
+            }
+            if(i==10)
+            {
+                printf("⚪");
+                continue;
+            }
+            printf("➕");//◯☀☼☺☻◆◇♔♚♖♜♛♕
         }
     }
-    //printf("@");
+    //printf("➕ ◯ 😃 😄 ⚫ ⚪ ☀ ☼ ☺ ☻ ◆ ◇ ♔ ♚ ♖ ♜ ♛ ♕\n");
     RESET_CURSOR();
     //CLEAR();
 
