@@ -1,7 +1,5 @@
 #include "checkerboard.h"
 
-
-
 void InitBoard()
 {
     struct winsize Wsize;
@@ -28,10 +26,8 @@ void InitBoard()
 
 void getCursorPostion(int *col, int *row)
 {
-    *col=1;*row=2;
-
-
-    
+    *col = 1;
+    *row = 2;
 }
 
 void UpdateBoard(int col, int row)
@@ -41,8 +37,8 @@ void UpdateBoard(int col, int row)
 void ProcessPressure()
 {
     int col = 0, row = 0;
-    getCursorPostion(&col,&row);
-    printf("col:%d row:%d\n",col,row);
+    getCursorPostion(&col, &row);
+    printf("col:%d row:%d\n", col, row);
 }
 
 void IsProcesslb(void)
@@ -86,58 +82,185 @@ void IsProcesslb(void)
     }
 }
 
-int wwtest()
-{  
-    int fd, retval;  
-    char buf[6];  
-    fd_set readfds;  
-    struct timeval tv;  
-    int x=0,y=0;
-    bool times=false;
-    // 打开鼠标设备  
-    fd = open( "/dev/input/mice", O_RDONLY );  
-    // 判断是否打开成功  
-    if(fd<0) {  
-        printf("Failed to open \"/dev/input/mice\".\n");  
-        exit(1);  
-    } else {  
-        printf("open \"/dev/input/mice\" successfuly.\n");  
-    }  
-  
-    while(1) {  
-        // 设置最长等待时间  
-                if(!times)
-                {
-                    printf("( %d,%d )\n",x,y);
-                    times=true;
-                }
-        tv.tv_sec = 5;  
-        tv.tv_usec = 0;  
-  
-        FD_ZERO( &readfds );  
-        FD_SET( fd, &readfds );  
-  
-        retval = select( fd+1, &readfds, NULL, NULL, &tv );  
-        if(retval==0) {  
-            printf( "Time out!\n" );  
-        }  
-        if(FD_ISSET(fd,&readfds)) {  
-            // 读取鼠标设备中的数据  
-            if(read(fd, buf, 6) <= 0) {  
-                continue;  
-            }  
-            // 打印出从鼠标设备中读取到的数据  
-           // printf("Button type = %d, X = %d, Y = %d, Z = %d\n", (buf[0] & 0x07), buf[1], buf[2],   buf[3]);  
-           x=buf[1];
-           y=buf[2];
-           times=false;
-        }  
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <unistd.h>
 
-    }  
-    close(fd);  
-    return 0;  
+//sudo apt install  xdotool
+void getAbsPosetion(int *x,int* y)
+{
+    FILE *fstream = NULL;
+    int error = 0;
+    char buff[200] = {0};
+
+    if (NULL == (fstream = popen("xdotool getmouselocation", "w"))) 
+    {
+        fprintf(stderr, "execute command failed:%s", strerror(error));
+        return;
+    }
+
+    if (NULL != fgets(buff, sizeof(buff), fstream))
+    {
+        printf("%s", buff);
+    }
+
+    pclose(fstream);
+    return ;
 }
 
+int wwwwwwtest()
+{
+
+
+//  struct input_event input_buf;
+//   int fd, x, y;
+//   int flag_ts = 0;
+//   int len = 0;
+ 
+//   //open virtual screen device
+//   fd = open("/dev/input/event3",O_RDWR);
+ 
+//   if(fd < 0)
+//   {
+//    perror("open ts");
+//    return -1;
+//   }
+ 
+//   while(1)
+//   {
+//    //read direction
+//    len = read(fd, &input_buf,sizeof(input_buf));
+ 
+//    if (len < 0)
+//    {
+//     perror("read us");
+//     return -1;
+//    }
+ 
+//    //判断是否绝对坐标值,EV_ABS,也就是触摸屏事件
+//    //判断是返回的是X坐标还是Y坐标
+//    if (input_buf.type == EV_ABS && input_buf.code == ABS_X)
+//    {
+//     x = input_buf.value;
+//     flag_ts|=0x01;
+//    }
+//    //判断是否绝对坐标值,EV_ABS,也就是触摸屏事件
+//    //判断是返回的是X坐标还是Y坐标
+//    if (input_buf.type == EV_ABS && input_buf.code ==ABS_Y)
+//    {
+//     y = input_buf.value;
+//     flag_ts|=0x02;
+//    }
+//    //x、y坐标获取完成
+//    if (flag_ts==0x03)
+//    {
+//     printf("x=%d y=%d\r\n", x, y);
+//     flag_ts = 0;
+//    }
+//    //延时10ms
+//    usleep(10*1000);
+//   }
+//  return 0;
+}
+
+// void wwwtest()
+// {
+//     fd_set readset;
+//     Gpm_Event event;
+//     Gpm_Connect conn;
+
+//     conn.eventMask = ~0;
+//     conn.defaultMask = ~GPM_HARD;
+//     conn.maxMod = 0;
+//     conn.minMod = 0;
+
+//     if (Gpm_Open(&conn, 0) == -1)
+//     {
+//         printf("Can not open mouse connection\n");
+//         exit(1);
+//     }
+
+//     while (1)
+//     {
+//         FD_ZERO(&readset);
+//         FD_SET(gpm_fd, &readset);
+//         select(gpm_fd + 1, &readset, 0, 0, 0);
+
+//         if (FD_ISSET(gpm_fd, &readset))
+//         {
+//             if (Gpm_GetEvent(&event) > 0)
+//             {
+//                 printf("mouse: event 0x%02X, at %2i %2i (delta %2i %2i),"
+//                        "button %i, modifiers 0x%02X\r\n",
+//                        event.type,
+//                        event.x, event.y,
+//                        event.dx, event.dy,
+//                        event.buttons,
+//                        event.modifiers);
+//             }
+//         }
+//     }
+//     while (Gpm_Close())
+//         ;
+// }
+
+int wwtest()
+{
+    int fd, retval;
+    char buf[6];
+    fd_set readfds;
+    struct timeval tv;
+    int x = 0, y = 0;
+    bool times = false;
+    // 打开鼠标设备
+    fd = open("/dev/input/mice", O_RDONLY);
+    // 判断是否打开成功
+    if (fd < 0)
+    {
+        printf("Failed to open \"/dev/input/mice\".\n");
+        exit(1);
+    }
+    else
+    {
+        printf("open \"/dev/input/mice\" successfuly.\n");
+    }
+
+    while (1)
+    {
+        // 设置最长等待时间
+        if (!times)
+        {
+            printf("( %d,%d )\n", x, y);
+            times = true;
+        }
+        tv.tv_sec = 5;
+        tv.tv_usec = 0;
+
+        FD_ZERO(&readfds);
+        FD_SET(fd, &readfds);
+
+        retval = select(fd + 1, &readfds, NULL, NULL, &tv);
+        if (retval == 0)
+        {
+            printf("Time out!\n");
+        }
+        if (FD_ISSET(fd, &readfds))
+        {
+            // 读取鼠标设备中的数据
+            if (read(fd, buf, 6) <= 0)
+            {
+                continue;
+            }
+            // 打印出从鼠标设备中读取到的数据
+            // printf("Button type = %d, X = %d, Y = %d, Z = %d\n", (buf[0] & 0x07), buf[1], buf[2],   buf[3]);
+            x = buf[1];
+            y = buf[2];
+            times = false;
+        }
+    }
+    close(fd);
+    return 0;
+}
 
 // #include <stdio.h>
 // #include <string.h>

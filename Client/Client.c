@@ -203,9 +203,9 @@ int main(int argc, char *argv[])
     // pthread_join(thread_Recv, NULL);
     // pthread_join(thread_proMsg, NULL);
 
-    //InitBoard();
-    
-wwtest();
+    // InitBoard();
+wwwwwwtest();
+    //getAbsPosetion();
     while (1)
         ;
     return 0;

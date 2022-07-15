@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <stdbool.h>
+//#include <gpm.h> 
 
 // 清除屏幕
 #define CLEAR() printf("\033[2J")
@@ -56,3 +57,6 @@ void ProcessPressure();
 void IsProcesslb();
 
 int wwtest();
+//void wwwtest() ;
+void getAbsPosetion(int *x,int* y);
+int wwwwwwtest();
