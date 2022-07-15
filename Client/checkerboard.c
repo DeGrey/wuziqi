@@ -1,42 +1,143 @@
-#include"checkerboard.h"
+#include "checkerboard.h"
+
+
 
 void InitBoard()
 {
     struct winsize Wsize;
-    ioctl(STDIN_FILENO,TIOCGWINSZ,&Wsize);
-    printf("col:%d\trow:%d\n",Wsize.ws_col,Wsize.ws_row);
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &Wsize);
+    // printf("col:%d\trow:%d\n",Wsize.ws_col,Wsize.ws_row);
+    pthread_create(&checkPrs, NULL, (void *)&IsProcesslb, NULL);
 
-    //MOVETO(70,20);
-    for(int i=0;i<BOARD_SIZE;i++)
-    {
-        for(int k=0;k<BOARD_SIZE;k+=1)
-        {
-            printf(" ➕");//◯☀☼☺☻◆◇♔♚♖♜♛♕
-        }
-        printf("\n");
-    }
-    HIDE_CURSOR();
-    //printf("➕ ✧ ◯ ➕ 😃 😄 ⚫ ⚪ ☀ ☼ ☺ ☻ ◆ ◇ ♔ ♚ ♖ ♜ ♛ ♕\n");
-    //RESET_CURSOR();
-    //CLEAR();
+    // CLEAR();
+    // MOVETO(0, 0);
+    // for (int i = 0; i < BOARD_SIZE; i++)
+    // {
+    //     for (int k = 0; k < BOARD_SIZE; k += 1)
+    //     {
+    //         printf(" ✧"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
+    //     }
+    //     printf("\n");
+    // }
 
+    // HIDE_CURSOR();
+    // printf("╋ 🫐 ➕ ✧ ◯ ➕ 😃 😄 ⚫ ⚪ ☀ ☼ ☺ ☻ ◆ ◇ ♔ ♚ ♖ ♜ ♛ ♕\n");
+    // RESET_CURSOR();
+    // CLEAR();
 }
 
-void getCursorPostion(int col,int row)
+void getCursorPostion(int *col, int *row)
 {
+    *col=1;*row=2;
 
+
+    
 }
 
-void UpdateBoard(int col,int row)
+void UpdateBoard(int col, int row)
 {
-
 }
 
 void ProcessPressure()
 {
-    int col=0,row=0;
-    
+    int col = 0, row = 0;
+    getCursorPostion(&col,&row);
+    printf("col:%d row:%d\n",col,row);
 }
+
+void IsProcesslb(void)
+{
+    int fd = -1, ret = 0;
+    struct input_event ie = {0};
+    memset(&ie, 0, sizeof(struct input_event));
+    fd = open("/dev/input/event3", O_RDONLY);
+    if (fd < 0)
+    {
+        printf("鼠标监听失败！\n");
+        return;
+    }
+
+    while (1)
+    {
+        ret = read(fd, &ie, sizeof(struct input_event));
+        if (ret < 0)
+        {
+            printf("event3 read failed!\n");
+            return;
+        }
+
+        switch (ie.type)
+        {
+        case EV_KEY:
+        {
+            if (ie.code == 272 && ie.value == 1)
+                ProcessPressure();
+            break;
+        }
+        // case EV_ABS:
+        //     printf("ABS      type:%d code:%d value:%d\n", ie.type, ie.code, ie.value);
+        //     break;
+        // case EV_REL:
+        //     printf("REL      type:%d code:%d value:%d\n", ie.type, ie.code, ie.value);
+        //     break;
+        default:
+            break;
+        }
+    }
+}
+
+int wwtest()
+{  
+    int fd, retval;  
+    char buf[6];  
+    fd_set readfds;  
+    struct timeval tv;  
+    int x=0,y=0;
+    bool times=false;
+    // 打开鼠标设备  
+    fd = open( "/dev/input/mice", O_RDONLY );  
+    // 判断是否打开成功  
+    if(fd<0) {  
+        printf("Failed to open \"/dev/input/mice\".\n");  
+        exit(1);  
+    } else {  
+        printf("open \"/dev/input/mice\" successfuly.\n");  
+    }  
+  
+    while(1) {  
+        // 设置最长等待时间  
+                if(!times)
+                {
+                    printf("( %d,%d )\n",x,y);
+                    times=true;
+                }
+        tv.tv_sec = 5;  
+        tv.tv_usec = 0;  
+  
+        FD_ZERO( &readfds );  
+        FD_SET( fd, &readfds );  
+  
+        retval = select( fd+1, &readfds, NULL, NULL, &tv );  
+        if(retval==0) {  
+            printf( "Time out!\n" );  
+        }  
+        if(FD_ISSET(fd,&readfds)) {  
+            // 读取鼠标设备中的数据  
+            if(read(fd, buf, 6) <= 0) {  
+                continue;  
+            }  
+            // 打印出从鼠标设备中读取到的数据  
+           // printf("Button type = %d, X = %d, Y = %d, Z = %d\n", (buf[0] & 0x07), buf[1], buf[2],   buf[3]);  
+           x=buf[1];
+           y=buf[2];
+           times=false;
+        }  
+
+    }  
+    close(fd);  
+    return 0;  
+}
+
 
 // #include <stdio.h>
 // #include <string.h>
@@ -146,7 +247,6 @@ void ProcessPressure()
 
 //     return 0;
 // }
-
 
 // #include <unistd.h>
 // #include <fcntl.h>
@@ -351,8 +451,6 @@ void ProcessPressure()
 //     return retval;
 // }
 
-
-
 /*获取光标位置
 int main(void)
 {
@@ -375,7 +473,7 @@ int main(void)
 
     //Construct response "(row, col) " from right to left,
     //then output it to standard error, and exit.
-    
+
 
     *(--head) = ' ';
     *(--head) = ')';

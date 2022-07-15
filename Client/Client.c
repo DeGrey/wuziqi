@@ -1,5 +1,5 @@
 #include "Client.h"
-#include"checkerboard.h"
+#include "checkerboard.h"
 
 int handle_socket = 0;
 char *nickname;
@@ -203,8 +203,10 @@ int main(int argc, char *argv[])
     // pthread_join(thread_Recv, NULL);
     // pthread_join(thread_proMsg, NULL);
 
-    InitBoard();
-
-while(1);
+    //InitBoard();
+    
+wwtest();
+    while (1)
+        ;
     return 0;
 }

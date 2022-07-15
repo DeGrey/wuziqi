@@ -1,3 +1,4 @@
-OBJ=Client.c checkerboard.c
-wuziqi:$(OBJ) Client.h checkerboard.h
+OBJ=Client.c checkerboard.c 
+OBJH=Client.h checkerboard.h
+wuziqi:$(OBJ) $(OBJH)
 	gcc $(OBJ) -lpthread -o wuziqi
