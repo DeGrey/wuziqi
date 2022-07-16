@@ -2,8 +2,43 @@
 #include "checkerboard.h"
 
 int handle_socket = 0;
-char *nickname;
+char* nickname;
 int socket_atServer = 0;
+pthread_mutex_t  Msg_process;
+struct node *Msg_list;
+
+void list_init()
+{
+    Msg_list = (struct node *)malloc(sizeof(struct node));
+    Msg_list->next = Msg_list;
+    memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
+}
+void list_push(struct node *anode)
+{
+    anode->next = Msg_list->next;
+    Msg_list->next = anode;
+    Msg_list = anode;
+}
+void list_pop(struct node *anode)
+{
+    Msg_list->next->next = anode->next;
+    if (anode->next->Msginfo.type == 0)
+        Msg_list = anode->next;
+    free(anode);
+}
+
+void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
+{
+    Msg->type=type;
+    //Msg->nickname=nickname;
+    Msg->socket_other=socket_other;
+    Msg->socket_self=socket_self;
+
+    strcpy(Msg->nickname,nickname);
+    strcpy(Msg->data,data);
+
+    return ;
+}
 
 bool contoserver(char *address, int port)
 {
@@ -163,8 +198,8 @@ void PreProcess(char *cmd, int socket_other, char *data)
 
 int main(int argc, char *argv[])
 {
-    // nickname = (char *)malloc(sizeof(char));
-    // strcpy(nickname, argv[1]);
+    nickname = (char *)malloc(sizeof(char));
+    strcpy(nickname, argv[1]);
 
     // printf("正在连接服务器...\n");
 
@@ -202,11 +237,13 @@ int main(int argc, char *argv[])
 
     // pthread_join(thread_Recv, NULL);
     // pthread_join(thread_proMsg, NULL);
+//printf("why");
 
-    // InitBoard();
-wwwwwwtest();
-    //getAbsPosetion();
-    while (1)
-        ;
+    InitBoard(0);
+
+    // //getAbsPosetion();
+    // while (1)
+    //     ;
+        SHOW_CURSOR();
     return 0;
 }

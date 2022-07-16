@@ -23,10 +23,9 @@
 #define START_MATCH 104
 #define MATCH_ACK 105
 
+#define MATCH_SETLOCATION 201
+
 #define LOGIN "login"
-
-pthread_mutex_t  Msg_process;
-
 
 
 struct Msg_info
@@ -39,19 +38,21 @@ struct Msg_info
     char  data[MAX_MSG_SIZE];
 };
 
+void SendToServer(struct Msg_info MsgInfo);
 
-void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
-{
-    Msg->type=type;
-    //Msg->nickname=nickname;
-    Msg->socket_other=socket_other;
-    Msg->socket_self=socket_self;
 
-    strcpy(Msg->nickname,nickname);
-    strcpy(Msg->data,data);
+void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data);
+// {
+//     Msg->type=type;
+//     //Msg->nickname=nickname;
+//     Msg->socket_other=socket_other;
+//     Msg->socket_self=socket_self;
 
-    return ;
-}
+//     strcpy(Msg->nickname,nickname);
+//     strcpy(Msg->data,data);
+
+//     return ;
+// }
 
 struct node
 {
@@ -59,23 +60,22 @@ struct node
     struct node *next;
 };
 
-struct node *Msg_list;
-void list_init()
-{
-    Msg_list = (struct node *)malloc(sizeof(struct node));
-    Msg_list->next = Msg_list;
-    memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
-}
-void list_push(struct node *anode)
-{
-    anode->next = Msg_list->next;
-    Msg_list->next = anode;
-    Msg_list = anode;
-}
-void list_pop(struct node *anode)
-{
-    Msg_list->next->next = anode->next;
-    if (anode->next->Msginfo.type == 0)
-        Msg_list = anode->next;
-    free(anode);
-}
+void list_init();
+// {
+//     Msg_list = (struct node *)malloc(sizeof(struct node));
+//     Msg_list->next = Msg_list;
+//     memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
+// }
+void list_push(struct node *anode);
+// {
+//     anode->next = Msg_list->next;
+//     Msg_list->next = anode;
+//     Msg_list = anode;
+// }
+void list_pop(struct node *anode);
+// {
+//     Msg_list->next->next = anode->next;
+//     if (anode->next->Msginfo.type == 0)
+//         Msg_list = anode->next;
+//     free(anode);
+// }
