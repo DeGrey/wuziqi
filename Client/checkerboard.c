@@ -1,30 +1,49 @@
 #include "checkerboard.h"
-#include"Client.h"
+#include "Client.h"
 
 int x = 0, y = 0;
-extern char* nickname;
+extern char *nickname;
 extern int socket_atServer;
-int socket_other=0;
+int socket_other = 0;
+bool turn = true, piece = false;
+bool isTakeUp[20][20] = {false};
 
 void InitBoard(int s_O)
 {
-    socket_other=s_O;
+    socket_other = s_O;
 
     pthread_t checkPrs;
     // struct winsize Wsize;
     // ioctl(STDIN_FILENO, TIOCGWINSZ, &Wsize);
     // printf("col:%d\trow:%d\n",Wsize.ws_col,Wsize.ws_row);
-    pthread_create(&checkPrs, NULL, (void *)&IsProcesskey, NULL);
+    pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
 
     CLEAR();
     MOVETO(0, 0);
     fflush(stdout);
+
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int k = 0; k < BOARD_SIZE; k += 1)
         {
             printf(" 🫐"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
         }
+        if (i == 5 && !turn)
+            printf("  状态：对方正在落棋");
+        else if (i == 5 && turn)
+            printf("  状态：己方正在落棋");
+        if (i == 7)
+            printf("\t控制：");
+        if (i == 8)
+            printf("\tW：↑"); //\t=6
+        if (i == 9)
+            printf("\tS：↓");
+        if (i == 10)
+            printf("\tA：←");
+        if (i == 11)
+            printf("\tD：→");
+        if (i == 12)
+            printf("\tEnter：落棋");
         printf("\n");
     }
 
@@ -34,6 +53,7 @@ void InitBoard(int s_O)
     HIDE_CURSOR();
     fflush(stdout);
     system("stty -echo");
+
     // MOVETO(10, 10*3-1);
     // printf("⚪");
     // fflush(stdout);
@@ -44,30 +64,26 @@ void InitBoard(int s_O)
     pthread_join(checkPrs, NULL);
 }
 
-void UpdateBoard(int col, int row, char *cr)
+void setpiece()
 {
-    MOVETO(col, row);
-    // printf("%s",cr);
-    // printf("why");
+    piece=false;
 }
 
-void getCursorPostion(int *col, int *row)
-{
-    *col = 1;
-    *row = 2;
-}
 
 void ProcessPressure(int key)
 {
+    if (!turn)
+        return;
     switch (key)
     {
     case 17:
     {
-        if (--y < 0)
+        if (--y < 0 || isTakeUp[x][y])
         {
             y++;
             break;
         }
+
         printf(" 🫐");
         MOVELEFT(3);
 
@@ -82,7 +98,7 @@ void ProcessPressure(int key)
 
     case 31:
     {
-        if (++y > 19)
+        if (++y > 19 || isTakeUp[x][y])
         {
             y--;
             break;
@@ -102,7 +118,7 @@ void ProcessPressure(int key)
 
     case 30:
     {
-        if (--x < 0)
+        if (--x < 0 || isTakeUp[x][y])
         {
             x++;
             break;
@@ -116,14 +132,13 @@ void ProcessPressure(int key)
         printf(" 😃");
         MOVELEFT(3);
 
-
         fflush(stdout);
         break;
     }
 
     case 32:
     {
-        if (++x > 19)
+        if (++x > 19 || isTakeUp[x][y])
         {
             x--;
             break;
@@ -137,24 +152,73 @@ void ProcessPressure(int key)
         printf(" 😃");
         MOVELEFT(3);
 
-
         fflush(stdout);
         break;
     }
     case 28:
     {
-        struct Msg_info MsgInfo={0};
-        MakeMsg(&MsgInfo,MATCH_SETLOCATION,nickname,socket_atServer,socket_other,"");
+        ProcessState(x, y, true);
+
+        struct Msg_info MsgInfo = {0};
+        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
+        SendToServer(MsgInfo);
+
     }
 
     default:
     {
     }
-        break;
+    break;
     }
 }
 
-void IsProcesskey(void)
+void ProcessState(int rel_x, int rel_y, bool self_other)
+{
+    if (self_other)
+        turn = false;
+    else
+        turn = true;
+
+    isTakeUp[x][y] = true;
+
+    MOVETO(rel_x, rel_y);
+    if (self_other)
+    {
+        if (!piece)
+            printf(" ⚫");
+        else
+            printf(" ⚪");
+    }
+    else
+    {
+        if (!piece)
+            printf(" ⚪");
+        else
+            printf(" ⚫");
+    }
+
+    if (!self_other)
+    {
+        int temp_x = x, temp_y = y;
+        while (!isTakeUp[temp_x][temp_y])
+        {
+            temp_x++;
+            temp_x %= BOARD_SIZE;
+        }
+
+        x = temp_x;
+        y = temp_y;
+        MOVETO(temp_x, temp_y);
+        printf(" 😃");
+    }
+
+    MOVELEFT(3);
+    fflush(stdout);
+}
+
+
+
+void IsPressurekey(void)
 {
 
     while (1)
@@ -179,15 +243,13 @@ void IsProcesskey(void)
                 return;
             }
 
-            //printf("type:%d ,value,%d ,code:%d\n",ie.type,ie.value,ie.code);
+            // printf("type:%d ,value,%d ,code:%d\n",ie.type,ie.value,ie.code);
             switch (ie.type)
             {
             case EV_KEY:
             {
-                if (ie.value >0)
-                {
+                if (ie.value > 0)
                     ProcessPressure(ie.code);
-                }
                 break;
             }
             default:

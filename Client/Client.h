@@ -23,9 +23,30 @@
 #define START_MATCH 104
 #define MATCH_ACK 105
 
-#define MATCH_SETLOCATION 201
+#define MATCH_SET_LOCATION 201
 
-#define LOGIN "login"
+
+// 清除屏幕
+#define CLEAR() printf("\033[2J")
+// 上移光标
+#define MOVEUP(x) printf("\033[%dA", (x))
+// 下移光标
+#define MOVEDOWN(x) printf("\033[%dB", (x))
+// 左移光标
+#define MOVELEFT(y) printf("\033[%dD", (y))
+// 右移光标
+#define MOVERIGHT(y) printf("\033[%dC", (y))
+// 定位光标
+#define MOVETO(x, y) printf("\033[%d;%dH", (x), (y))
+// 光标复位
+#define RESET_CURSOR() printf("\033[H")
+// 隐藏光标
+#define HIDE_CURSOR() printf("\033[?25l")
+// 显示光标
+#define SHOW_CURSOR() printf("\033[?25h")
+//反显
+#define HIGHT_LIGHT() printf("\033[7m")
+#define UN_HIGHT_LIGHT() printf("\033[27m")
 
 
 struct Msg_info
@@ -36,12 +57,14 @@ struct Msg_info
     int socket_self;
     int socket_other;
     char  data[MAX_MSG_SIZE];
+    int x;
+    int y;
 };
 
 void SendToServer(struct Msg_info MsgInfo);
 
 
-void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data);
+void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data,int x,int y);
 // {
 //     Msg->type=type;
 //     //Msg->nickname=nickname;
@@ -54,25 +77,27 @@ void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int soc
 //     return ;
 // }
 
+void setpiece();
+
 struct node
 {
     struct Msg_info Msginfo;
     struct node *next;
 };
 
-void list_init();
+void list_init(struct node *Msg_list);
 // {
 //     Msg_list = (struct node *)malloc(sizeof(struct node));
 //     Msg_list->next = Msg_list;
 //     memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
 // }
-void list_push(struct node *anode);
+void list_push(struct node *M_list,struct node *anode);
 // {
 //     anode->next = Msg_list->next;
 //     Msg_list->next = anode;
 //     Msg_list = anode;
 // }
-void list_pop(struct node *anode);
+void list_pop(struct node *M_list,struct node *anode);
 // {
 //     Msg_list->next->next = anode->next;
 //     if (anode->next->Msginfo.type == 0)

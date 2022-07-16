@@ -97,7 +97,7 @@ void SetID(void *param)
     {
         int ssocket_set = (int)(long)param;
         struct Msg_info Msg = {0};
-        MakeMsg(&Msg, SET_ID, "system(0)", 0, ssocket_set, "setid");
+        MakeMsg(&Msg, SET_ID, "system(0)", 0, ssocket_set, "setid",0,0);
         SendaMsg(false, Msg);
     }
     // printf("ID set sucessed\n");
@@ -159,6 +159,7 @@ void ProcessMsg(void)
             }
             case START_MATCH:
             {
+                SendaMsg(false, Msg_list->next->next->Msginfo);
                 break;
             }
 
@@ -221,7 +222,7 @@ int main()
     {
         char test[200];
         scanf("%s", test);
-        MakeMsg(&Msg, CHAT_TO_EB, "system", 0, 0, test);
+        MakeMsg(&Msg, CHAT_TO_EB, "system", 0, 0, test,0,0);
         SendaMsg(true, Msg);
     }
 

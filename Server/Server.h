@@ -24,6 +24,8 @@
 #define START_MATCH 104
 #define MATCH_ACK 105
 
+#define MATCH_SET_LOCATION 201
+
 
 pthread_mutex_t  Msg_process;
 
@@ -43,9 +45,11 @@ struct Msg_info
     int socket_self;
     int socket_other;
     char  data[MAX_MSG_SIZE];
+    int x;
+    int y;
 };
 
-void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
+void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data,int x,int y)
 {
     Msg->type=type;
     //Msg->nickname=nickname;

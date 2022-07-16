@@ -2,42 +2,44 @@
 #include "checkerboard.h"
 
 int handle_socket = 0;
-char* nickname;
+char *nickname;
 int socket_atServer = 0;
-pthread_mutex_t  Msg_process;
-struct node *Msg_list;
+pthread_mutex_t Msg_process, Visible_Msg_process;
+struct node *Msg_list, *Visible_Msg_list;
+int V_M_L_N = 0;
+bool ismatch = false;
 
-void list_init()
+void list_init(struct node *M_list)
 {
-    Msg_list = (struct node *)malloc(sizeof(struct node));
-    Msg_list->next = Msg_list;
-    memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
+    // Msg_list = (struct node *)malloc(sizeof(struct node));
+    M_list->next = Msg_list;
+    memset(&M_list->Msginfo, 0, sizeof(struct Msg_info));
 }
-void list_push(struct node *anode)
+void list_push(struct node *M_list, struct node *anode)
 {
-    anode->next = Msg_list->next;
-    Msg_list->next = anode;
-    Msg_list = anode;
+    anode->next = M_list->next;
+    M_list->next = anode;
+    M_list = anode;
 }
-void list_pop(struct node *anode)
+void list_pop(struct node *M_list, struct node *anode)
 {
-    Msg_list->next->next = anode->next;
+    M_list->next->next = anode->next;
     if (anode->next->Msginfo.type == 0)
-        Msg_list = anode->next;
+        M_list = anode->next;
     free(anode);
 }
 
-void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data)
+void MakeMsg(struct Msg_info *Msg, int type, char *nickname, int socket_self, int socket_other, char *data, int x, int y)
 {
-    Msg->type=type;
-    //Msg->nickname=nickname;
-    Msg->socket_other=socket_other;
-    Msg->socket_self=socket_self;
+    Msg->type = type;
+    // Msg->nickname=nickname;
+    Msg->socket_other = socket_other;
+    Msg->socket_self = socket_self;
 
-    strcpy(Msg->nickname,nickname);
-    strcpy(Msg->data,data);
+    strcpy(Msg->nickname, nickname);
+    strcpy(Msg->data, data);
 
-    return ;
+    return;
 }
 
 bool contoserver(char *address, int port)
@@ -117,10 +119,27 @@ void RecvFmClient(void)
             anode->Msginfo = MsgInfo;
 
             pthread_mutex_lock(&Msg_process);
-            list_push(anode);
+            list_push(Msg_list, anode);
             pthread_mutex_unlock(&Msg_process);
         }
     }
+}
+void Setname(char* name,int id)
+{
+    int num;
+    char *n=(char*)malloc(sizeof(char));
+    char* nn;
+    *nn=*(n+sizeof(char));
+    *(nn--)='\0';
+    *(nn--)=')';
+    while(id)
+    {
+        num=id%10;
+        *(nn--)='0'+num;
+        id/=10;
+    }
+    *nn='(';
+    strcat(name,nn);
 }
 
 void ProcessMsg(void)
@@ -135,12 +154,45 @@ void ProcessMsg(void)
             {
             case CHAT_TO_EB:
             {
-                printf("%s：%s\n", Msg_list->next->next->Msginfo.nickname, Msg_list->next->next->Msginfo.data);
+                Setname(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.socket_self);
+                strcat(Msg_list->next->next->Msginfo.nickname,"：");
+                strcat(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.data);
+
+                pthread_mutex_lock(&Visible_Msg_process);
+                if (V_M_L_N >= 10)
+                    break;
+                struct node *anode = (struct node *)malloc(sizeof(struct node));
+                anode->Msginfo = Msg_list->next->next->Msginfo;
+                list_push(Visible_Msg_list, anode);
+                V_M_L_N++;
+                pthread_mutex_unlock(&Visible_Msg_process);
+
+                // printf("%s：%s\n", Msg_list->next->next->Msginfo.nickname, Msg_list->next->next->Msginfo.data);
                 break;
             }
             case CHAT_TO_SB:
             {
-                printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, nickname, Msg_list->next->next->Msginfo.data);
+                Setname(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.socket_self);
+
+                char* tem=(char*)malloc(sizeof(char));
+                strcpy(tem,nickname);
+
+                Setname(tem,socket_atServer);
+
+                strcat(Msg_list->next->next->Msginfo.nickname," To ");
+                strcat(Msg_list->next->next->Msginfo.nickname,tem);
+                strcat(Msg_list->next->next->Msginfo.nickname,"：");
+                strcat(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.data);
+                
+                pthread_mutex_lock(&Visible_Msg_process);
+                if (V_M_L_N >= 10)
+                    break;
+                struct node *anode = (struct node *)malloc(sizeof(struct node));
+                anode->Msginfo = Msg_list->next->next->Msginfo;
+                list_push(Visible_Msg_list, anode);
+                V_M_L_N++;
+                pthread_mutex_unlock(&Visible_Msg_process);
+                // printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, nickname, Msg_list->next->next->Msginfo.data);
                 break;
             }
             case SET_ID:
@@ -154,6 +206,10 @@ void ProcessMsg(void)
                 }
                 break;
             }
+            case START_MATCH:
+            {
+                //
+            }
             case MATCH_ACK:
             {
 
@@ -165,7 +221,7 @@ void ProcessMsg(void)
             }
 
             pthread_mutex_lock(&Msg_process);
-            list_pop(Msg_list->next->next);
+            list_pop(Msg_list, Msg_list->next->next);
             pthread_mutex_unlock(&Msg_process);
         }
     }
@@ -177,14 +233,15 @@ void PreProcess(char *cmd, int socket_other, char *data)
     if (0 == strcmp(cmd, "chat"))
     {
         if (NOT_USED == socket_other)
-            MakeMsg(&MsgInfo, CHAT_TO_EB, nickname, socket_atServer, socket_other, data);
+            MakeMsg(&MsgInfo, CHAT_TO_EB, nickname, socket_atServer, socket_other, data, 0, 0);
 
         else
-            MakeMsg(&MsgInfo, CHAT_TO_SB, nickname, socket_atServer, socket_other, data);
+            MakeMsg(&MsgInfo, CHAT_TO_SB, nickname, socket_atServer, socket_other, data, 0, 0);
     }
 
-    else if (0 == strcmp(cmd, "getid"))
+    else if (0 == strcmp(cmd, "match"))
     {
+        MakeMsg(&MsgInfo, START_MATCH, nickname, socket_atServer, socket_other, data, 0, 0);
     }
 
     else
@@ -202,48 +259,49 @@ int main(int argc, char *argv[])
     strcpy(nickname, argv[1]);
 
     // printf("正在连接服务器...\n");
+    Msg_list = (struct node *)malloc(sizeof(struct node));
+    Visible_Msg_list = (struct node *)malloc(sizeof(struct node));
 
-    // list_init();
-    // pthread_mutex_init(&Msg_process, NULL);
+    list_init(Msg_list);
+    list_init(Visible_Msg_list);
 
-    // if (!contoserver("127.0.0.1", 2000))
-    // {
-    //     // return 0;
-    // }
+        // pthread_mutex_init(&Msg_process, NULL);
+        // pthread_mutex_init(&Visible_Msg_process, NULL);
 
-    // printf("连接成功！\n正在分配ID...\n");
+        // if (!contoserver("127.0.0.1", 2000))
+        // {
+        //     // return 0;
+        // }
 
-    // pthread_t thread_Recv, thread_proMsg;
-    // pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
-    // pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
+        // printf("连接成功！\n正在分配ID...\n");
 
-    // printf("正在连接大厅...\n");
+        // pthread_t thread_Recv, thread_proMsg;
+        // pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
+        // pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    // while (1)
-    // {
+        // printf("正在连接大厅...\n");
 
-    //     char cmd[100];
-    //     int obj = -1;
-    //     char msg[MAX_MSG_SIZE] = "";
+        // while (1)
+        // {
 
-    //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
-    //     if (NOT_USED == socket_atServer)
-    //         continue;
-    //     if (obj <0)
-    //         continue;
+        //     char cmd[100];
+        //     int obj = -1;
+        //     char msg[MAX_MSG_SIZE] = "";
 
-    //     PreProcess(cmd, obj, msg);
-    // }
+        //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
+        //     if (NOT_USED == socket_atServer)
+        //         continue;
+        //     if (obj <0)
+        //         continue;
 
-    // pthread_join(thread_Recv, NULL);
-    // pthread_join(thread_proMsg, NULL);
-//printf("why");
+        //     PreProcess(cmd, obj, msg);
+        // }
 
-    InitBoard(0);
+        // pthread_join(thread_Recv, NULL);
+        // pthread_join(thread_proMsg, NULL);
 
-    // //getAbsPosetion();
-    // while (1)
-    //     ;
-        SHOW_CURSOR();
+        InitBoard(0);
+
+    SHOW_CURSOR();
     return 0;
 }
