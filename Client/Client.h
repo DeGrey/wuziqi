@@ -9,6 +9,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <math.h>
 
 
 #define MAX_USER_NUMBER 200
@@ -25,6 +26,16 @@
 
 #define MATCH_SET_LOCATION 201
 
+#define Print(a,b) printf("\033[%dm%s\033[0m",a,b)
+// a
+#define black 30
+#define red 31
+#define green 32 
+#define yellow 33
+#define blue 34
+#define purple 35
+#define deep_green 36
+#define white 37
 
 // 清除屏幕
 #define CLEAR() printf("\033[2J")
@@ -48,6 +59,9 @@
 #define HIGHT_LIGHT() printf("\033[7m")
 #define UN_HIGHT_LIGHT() printf("\033[27m")
 
+//关闭/打开回显
+#define HIDE_INPUT system("stty -echo")
+#define UN_HIDE_INPUT system("stty echo")
 
 struct Msg_info
 {
@@ -61,7 +75,14 @@ struct Msg_info
     int y;
 };
 
+
 void SendToServer(struct Msg_info MsgInfo);
+void PreProcess(char *cmd, int socket_other, char *data);
+void deleteOneline(int x, int y, int len);
+void IsPressurekey(void);
+void inputCmd(int);
+void update_visible_list();
+void isStartMatch(struct Msg_info);
 
 
 void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data,int x,int y);
@@ -77,7 +98,17 @@ void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int soc
 //     return ;
 // }
 
-void setpiece();
+void setpng(bool pi,bool g);
+void setturn(bool);
+
+struct Text_info
+{
+    char data[MAX_MSG_SIZE];
+    int type;
+};
+
+
+
 
 struct node
 {
@@ -85,19 +116,19 @@ struct node
     struct node *next;
 };
 
-void list_init(struct node *Msg_list);
+void list_init();
 // {
 //     Msg_list = (struct node *)malloc(sizeof(struct node));
 //     Msg_list->next = Msg_list;
 //     memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
 // }
-void list_push(struct node *M_list,struct node *anode);
+void list_push(struct node *anode);
 // {
 //     anode->next = Msg_list->next;
 //     Msg_list->next = anode;
 //     Msg_list = anode;
 // }
-void list_pop(struct node *M_list,struct node *anode);
+void list_pop(struct node* anode);
 // {
 //     Msg_list->next->next = anode->next;
 //     if (anode->next->Msginfo.type == 0)

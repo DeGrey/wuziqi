@@ -9,6 +9,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include<errno.h>
 //#include<list>
 
 #define MAX_MSG_LIST 2000
@@ -35,6 +36,7 @@ struct User_info
     int handle_socket;
     int port;
     char *address;
+    bool SetID;
 };
 
 struct Msg_info

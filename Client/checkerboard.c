@@ -5,18 +5,16 @@ int x = 0, y = 0;
 extern char *nickname;
 extern int socket_atServer;
 int socket_other = 0;
-bool turn = true, piece = false;
+bool turn = true, piece = false, isforgame = false;
 bool isTakeUp[20][20] = {false};
 
 void InitBoard(int s_O)
 {
     socket_other = s_O;
 
-    pthread_t checkPrs;
     // struct winsize Wsize;
     // ioctl(STDIN_FILENO, TIOCGWINSZ, &Wsize);
     // printf("col:%d\trow:%d\n",Wsize.ws_col,Wsize.ws_row);
-    pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
 
     CLEAR();
     MOVETO(0, 0);
@@ -61,14 +59,17 @@ void InitBoard(int s_O)
     //  printf("╋ 🫐 ➕ ✧ ◯ ➕ 😃 😄 ⚫ ⚪ ☀ ☼ ☺ ☻ ◆ ◇ ♔ ♚ ♖ ♜ ♛ ♕\n");
     // UpdateBoard(10,10,"🫐");
     //  UpdateBoard(10,15,"😃");
-    pthread_join(checkPrs, NULL);
 }
 
-void setpiece()
+void setpng(bool pi,bool g)
 {
-    piece=false;
+    piece = pi;
+    isforgame=g;
 }
-
+void setturn(bool t)
+{
+    turn=t;
+}
 
 void ProcessPressure(int key)
 {
@@ -162,7 +163,6 @@ void ProcessPressure(int key)
         struct Msg_info MsgInfo = {0};
         MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
         SendToServer(MsgInfo);
-
     }
 
     default:
@@ -216,46 +216,51 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
     fflush(stdout);
 }
 
-
-
 void IsPressurekey(void)
 {
 
+    // while (1)
+    // {
+    int times = 0;
+    int fd = -1, ret = 0;
+    struct input_event ie = {0};
+    memset(&ie, 0, sizeof(struct input_event));
+    fd = open("/dev/input/event1", O_RDONLY);
+    if (fd < 0)
+    {
+        printf("键盘监听失败！\n");
+        return;
+    }
+
     while (1)
     {
-        int times = 0;
-        int fd = -1, ret = 0;
-        struct input_event ie = {0};
-        memset(&ie, 0, sizeof(struct input_event));
-        fd = open("/dev/input/event1", O_RDONLY);
-        if (fd < 0)
+        ret = read(fd, &ie, sizeof(struct input_event));
+        if (ret < 0)
         {
-            printf("键盘监听失败！\n");
+            printf("event1 read failed!\n");
             return;
         }
 
-        while (1)
+        // printf("type:%d ,value,%d ,code:%d\n",ie.type,ie.value,ie.code);
+        switch (ie.type)
         {
-            ret = read(fd, &ie, sizeof(struct input_event));
-            if (ret < 0)
+        case EV_KEY:
+        {
+
+            if (ie.value > 0)
             {
-                printf("event1 read failed!\n");
-                return;
+                if (!isforgame && ie.value == 1)
+                    inputCmd(ie.code);
+                else if(isforgame)
+                    ProcessPressure(ie.code);
             }
 
-            // printf("type:%d ,value,%d ,code:%d\n",ie.type,ie.value,ie.code);
-            switch (ie.type)
-            {
-            case EV_KEY:
-            {
-                if (ie.value > 0)
-                    ProcessPressure(ie.code);
-                break;
-            }
-            default:
-                break;
-            }
+            break;
         }
-        close(fd);
+        default:
+            break;
+        }
     }
+    close(fd);
+    //}
 }

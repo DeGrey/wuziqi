@@ -5,27 +5,29 @@ int handle_socket = 0;
 char *nickname;
 int socket_atServer = 0;
 pthread_mutex_t Msg_process, Visible_Msg_process;
-struct node *Msg_list, *Visible_Msg_list;
+struct node *Msg_list;
 int V_M_L_N = 0;
-bool ismatch = false;
+bool ismatch = false, HasInit = false, isinCmd = false;
+struct Text_info Text[10];
+int Text_num = 0;
 
-void list_init(struct node *M_list)
+void list_init()
 {
     // Msg_list = (struct node *)malloc(sizeof(struct node));
-    M_list->next = Msg_list;
-    memset(&M_list->Msginfo, 0, sizeof(struct Msg_info));
+    Msg_list->next = Msg_list;
+    memset(&Msg_list->Msginfo, 0, sizeof(struct Msg_info));
 }
-void list_push(struct node *M_list, struct node *anode)
+void list_push(struct node *anode)
 {
-    anode->next = M_list->next;
-    M_list->next = anode;
-    M_list = anode;
+    anode->next = Msg_list->next;
+    Msg_list->next = anode;
+    Msg_list = anode;
 }
-void list_pop(struct node *M_list, struct node *anode)
+void list_pop(struct node *anode)
 {
-    M_list->next->next = anode->next;
+    Msg_list->next->next = anode->next;
     if (anode->next->Msginfo.type == 0)
-        M_list = anode->next;
+        Msg_list = anode->next;
     free(anode);
 }
 
@@ -119,27 +121,265 @@ void RecvFmClient(void)
             anode->Msginfo = MsgInfo;
 
             pthread_mutex_lock(&Msg_process);
-            list_push(Msg_list, anode);
+            list_push(anode);
             pthread_mutex_unlock(&Msg_process);
         }
     }
 }
-void Setname(char* name,int id)
+char *Setdata(char *name, int id, char *data)
 {
     int num;
-    char *n=(char*)malloc(sizeof(char));
-    char* nn;
-    *nn=*(n+sizeof(char));
-    *(nn--)='\0';
-    *(nn--)=')';
-    while(id)
+    char *n = (char *)malloc(sizeof(char));
+    n += sizeof(char);
+
+    *(n--) = '\0';
+    *(n--) = ':';
+    *(n--) = ')';
+    while (id)
     {
-        num=id%10;
-        *(nn--)='0'+num;
-        id/=10;
+        num = id % 10;
+        *(n--) = '0' + num;
+        id /= 10;
     }
-    *nn='(';
-    strcat(name,nn);
+    *n-- = ':';
+    *n-- = 'D';
+    *n-- = 'I';
+    *n = '(';
+
+    char *nn = (char *)malloc(200);
+    strcpy(nn, name);
+
+    strcat(nn, n);
+    strcat(nn, data);
+
+    return nn;
+}
+
+void deleteOneline(int x, int y, int len)
+{
+    MOVETO(x, y);
+    for (int i = 0; i < len; i++)
+    {
+        printf(" ");
+    }
+    MOVETO(x, y);
+    fflush(stdout);
+}
+
+void processinput(char *allM)
+{
+
+    int k = 0;
+    int len = strlen(allM) - 1;
+
+    while (*++allM != '\n')
+    {
+        if (*allM == ' ')
+            k++;
+    }
+    // printf("k=%d\n", k);
+    if (k < 1)
+        return;
+
+    char *cmd = (char *)malloc(sizeof(char));
+    int sok = 0;
+    char *data = (char *)malloc(sizeof(char));
+
+    *cmd-- = '\0';
+
+    if (k != 1)
+    {
+        *data-- = '\0';
+        while (*--allM != ' ')
+        {
+            *data-- = *allM;
+            len--;
+        }
+        data++;
+    }
+
+    int p = 0;
+    while (*--allM != ' ')
+    {
+        sok += ((int)(*allM - '0')) * pow(10, p);
+        p++;
+        len--;
+    }
+
+    if (k == 1)
+        len -= 1;
+    else
+        len -= 2;
+
+    while (len > 0)
+    {
+        *cmd-- = *--allM;
+        len--;
+    }
+    cmd++;
+    // printf("%s,%d,%s\n", cmd, sok, data);
+
+    PreProcess(cmd, sok, data);
+}
+
+bool iscmd()
+{
+
+    pthread_mutex_lock(&Visible_Msg_process);
+
+    MOVETO(11, 0);
+    Print(blue, "命令：");
+    fflush(stdout);
+
+    char ch;
+    do
+    {
+        ch = getchar();
+    } while (ch != 'i' && ch != 'I');
+
+    char cah[100];
+    fgets(cah, 100, stdin);
+    char *ToPro = (char *)malloc(sizeof(char) * strlen(cah) + 1);
+
+    strcpy(ToPro, cah);
+    // printf("%s\n", ToPro);
+    //  char cmd[100];
+    //  int obj = -1;
+    //  char msg[MAX_MSG_SIZE];
+
+    // scanf("%s %d %s", cmd, &obj, msg);
+
+    // while ((ch = getchar()) != '\n')
+    //     ;
+
+    // if (NOT_USED == socket_atServer)
+    //     continue;
+    // if (obj < 0)
+    //     continue;
+    //     MOVETO(11, 0);
+
+    deleteOneline(11, 0 /*7*/, 7 + strlen(ToPro) + 10 + 1 + 3 + 1);
+
+    pthread_mutex_unlock(&Visible_Msg_process);
+
+    processinput(ToPro);
+    // PreProcess(cmd, obj, msg);
+    //  update_visible_list();
+    //
+    return true;
+}
+
+void inputCmd(int key)
+{
+    if (!HasInit||ismatch)
+        return;
+    isinCmd = true;
+
+    switch (key)
+    {
+    case 23:
+    {
+        iscmd();
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    isinCmd = false;
+}
+
+void update_visible_list()
+{
+    // printf("update\n");
+    pthread_mutex_lock(&Visible_Msg_process);
+    CLEAR();
+    MOVETO(0, 0);
+    for (int i = Text_num; i < 10; i++)
+    {
+        if (Text[i].type == NOT_USED)
+            continue;
+        if (Text[i].type == CHAT_TO_SB)
+        {
+            Print(green, Text[i].data);
+            printf("\n");
+            continue;
+        }
+        printf("%s\n", Text[i].data);
+    }
+
+    for (int i = 0; i < Text_num; i++)
+    {
+        if (Text[i].type == NOT_USED)
+            continue;
+        if (Text[i].type == CHAT_TO_SB)
+        {
+            Print(green, Text[i].data);
+            printf("\n");
+            continue;
+        }
+        printf("%s\n", Text[i].data);
+    }
+
+    pthread_mutex_unlock(&Visible_Msg_process);
+}
+
+void insertTOText(struct node *anode)
+{
+    strcpy(Text[Text_num].data, Setdata(anode->Msginfo.nickname, anode->Msginfo.socket_self, anode->Msginfo.data));
+    Text[Text_num++].type = anode->Msginfo.type;
+    Text_num %= 10;
+
+    if (!ismatch)
+        update_visible_list();
+}
+
+void isStartMatch(struct Msg_info Mi)
+{
+    ismatch = true;
+
+
+    CLEAR();
+    MOVETO(5, 0);
+    char mg[100];
+    strcpy(mg, Mi.nickname);
+    strcat(mg, " 邀请你下五子棋！（y/n）:");
+        //printf("start 0 match\n");
+    Print(red, mg);
+    fflush(stdout);
+
+    char ch;
+    do
+    {
+        ch = getchar();
+    } while (ch !='\n');
+
+    // ch=getchar();
+    char s[2];
+    scanf("%s",s);
+    
+printf("ch:%s\n",s);
+return;
+    struct Msg_info msg = {0};
+    // if (s == 'y')
+    //     MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "yes", 0, 0);
+    // else
+    //     MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "no", 0, 0);
+
+    // SendToServer(msg);
+
+    // if(s=='y')
+    // {
+    //     setpng(true,true);
+    //     setturn(false);
+    //     InitBoard(Mi.socket_self);
+    // }
+    // else
+    // {
+    //     ismatch=false;
+    //     update_visible_list();
+    // }
 }
 
 void ProcessMsg(void)
@@ -154,45 +394,13 @@ void ProcessMsg(void)
             {
             case CHAT_TO_EB:
             {
-                Setname(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.socket_self);
-                strcat(Msg_list->next->next->Msginfo.nickname,"：");
-                strcat(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.data);
-
-                pthread_mutex_lock(&Visible_Msg_process);
-                if (V_M_L_N >= 10)
-                    break;
-                struct node *anode = (struct node *)malloc(sizeof(struct node));
-                anode->Msginfo = Msg_list->next->next->Msginfo;
-                list_push(Visible_Msg_list, anode);
-                V_M_L_N++;
-                pthread_mutex_unlock(&Visible_Msg_process);
-
-                // printf("%s：%s\n", Msg_list->next->next->Msginfo.nickname, Msg_list->next->next->Msginfo.data);
+                insertTOText(Msg_list->next->next);
+                // printf("shoudao：%s\n",Msg_list->next->next->Msginfo.data);
                 break;
             }
             case CHAT_TO_SB:
             {
-                Setname(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.socket_self);
-
-                char* tem=(char*)malloc(sizeof(char));
-                strcpy(tem,nickname);
-
-                Setname(tem,socket_atServer);
-
-                strcat(Msg_list->next->next->Msginfo.nickname," To ");
-                strcat(Msg_list->next->next->Msginfo.nickname,tem);
-                strcat(Msg_list->next->next->Msginfo.nickname,"：");
-                strcat(Msg_list->next->next->Msginfo.nickname,Msg_list->next->next->Msginfo.data);
-                
-                pthread_mutex_lock(&Visible_Msg_process);
-                if (V_M_L_N >= 10)
-                    break;
-                struct node *anode = (struct node *)malloc(sizeof(struct node));
-                anode->Msginfo = Msg_list->next->next->Msginfo;
-                list_push(Visible_Msg_list, anode);
-                V_M_L_N++;
-                pthread_mutex_unlock(&Visible_Msg_process);
-                // printf("%s To %s：%s", Msg_list->next->next->Msginfo.nickname, nickname, Msg_list->next->next->Msginfo.data);
+                insertTOText(Msg_list->next->next);
                 break;
             }
             case SET_ID:
@@ -208,11 +416,25 @@ void ProcessMsg(void)
             }
             case START_MATCH:
             {
-                //
+                isStartMatch(Msg_list->next->next->Msginfo);
             }
             case MATCH_ACK:
             {
-
+                if(0==strcmp(Msg_list->next->next->Msginfo.data,"yes"))
+                {
+                    ismatch=true;
+                    setpng(false,true);
+                    setturn(true);
+                    InitBoard(Msg_list->next->next->Msginfo.socket_self);
+                }
+                else
+                {
+                    Print(red,"对方已拒绝对局！一秒后回到大厅。。。");
+                    printf("\n");
+                    ismatch=false;
+                    sleep(1);
+                    update_visible_list();
+                }
                 break;
             }
 
@@ -221,7 +443,7 @@ void ProcessMsg(void)
             }
 
             pthread_mutex_lock(&Msg_process);
-            list_pop(Msg_list, Msg_list->next->next);
+            list_pop(Msg_list->next->next);
             pthread_mutex_unlock(&Msg_process);
         }
     }
@@ -229,6 +451,8 @@ void ProcessMsg(void)
 
 void PreProcess(char *cmd, int socket_other, char *data)
 {
+    // printf("cmd:%s,socket:%d,data:%s\n", cmd, socket_other, data);
+
     struct Msg_info MsgInfo = {0};
     if (0 == strcmp(cmd, "chat"))
     {
@@ -242,65 +466,109 @@ void PreProcess(char *cmd, int socket_other, char *data)
     else if (0 == strcmp(cmd, "match"))
     {
         MakeMsg(&MsgInfo, START_MATCH, nickname, socket_atServer, socket_other, data, 0, 0);
+        ismatch=true;
+        isinCmd = false;
+        CLEAR();
+        MOVETO(0,0);
+        Print(red,"正在等待对局确认!");
+        printf("\n");
+        fflush(stdout);
+        // return;
     }
 
     else
     {
-        printf("找不到命令：%s\n", cmd);
+        // printf("找不到命令：%s\n", cmd);
         return;
     }
 
     SendToServer(MsgInfo);
 }
+void checkCur(void)
+{
+    int times = 0;
+    while (1)
+    {
+
+        if (!isinCmd && times == 0)
+        {
+            HIDE_INPUT;
+            times++;
+        }
+
+        else if (isinCmd && times == 1)
+        {
+            UN_HIDE_INPUT;
+            times--;
+        }
+    }
+}
 
 int main(int argc, char *argv[])
 {
+    CLEAR();
+    MOVETO(0, 0);
+    fflush(stdout);
+
     nickname = (char *)malloc(sizeof(char));
     strcpy(nickname, argv[1]);
 
-    // printf("正在连接服务器...\n");
+    printf("正在连接服务器...\n");
     Msg_list = (struct node *)malloc(sizeof(struct node));
-    Visible_Msg_list = (struct node *)malloc(sizeof(struct node));
 
-    list_init(Msg_list);
-    list_init(Visible_Msg_list);
+    list_init();
 
-        // pthread_mutex_init(&Msg_process, NULL);
-        // pthread_mutex_init(&Visible_Msg_process, NULL);
+    for (int i = 0; i < 10; i++)
+        memset(&Text[i], 0, sizeof(struct Text_info));
 
-        // if (!contoserver("127.0.0.1", 2000))
-        // {
-        //     // return 0;
-        // }
+    pthread_t checkPrs, checkCurs;
+    pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
+    pthread_create(&checkCurs, NULL, (void *)&checkCur, NULL);
 
-        // printf("连接成功！\n正在分配ID...\n");
+    pthread_mutex_init(&Msg_process, NULL);
+    pthread_mutex_init(&Visible_Msg_process, NULL);
 
-        // pthread_t thread_Recv, thread_proMsg;
-        // pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
-        // pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
+    if (!contoserver("127.0.0.1", 2000))
+    {
+        // return 0;
+    }
 
-        // printf("正在连接大厅...\n");
+    printf("连接成功！\n正在分配ID...\n");
 
-        // while (1)
-        // {
+    pthread_t thread_Recv, thread_proMsg;
+    pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
+    pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-        //     char cmd[100];
-        //     int obj = -1;
-        //     char msg[MAX_MSG_SIZE] = "";
+    while (socket_atServer == 0)
+        ;
 
-        //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
-        //     if (NOT_USED == socket_atServer)
-        //         continue;
-        //     if (obj <0)
-        //         continue;
+    printf("ID分配成功！\n");
 
-        //     PreProcess(cmd, obj, msg);
-        // }
+    printf("正在连接大厅...\n");
+    printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
+    HasInit = true;
 
-        // pthread_join(thread_Recv, NULL);
-        // pthread_join(thread_proMsg, NULL);
+    // while (1)
+    // {
 
-        InitBoard(0);
+    //     char cmd[100];
+    //     int obj = -1;
+    //     char msg[MAX_MSG_SIZE] = "";
+
+    //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
+    //     if (NOT_USED == socket_atServer)
+    //         continue;
+    //     if (obj <0)
+    //         continue;
+
+    //     PreProcess(cmd, obj, msg);
+    // }
+
+    pthread_join(thread_Recv, NULL);
+    pthread_join(thread_proMsg, NULL);
+    pthread_join(checkPrs, NULL);
+
+    // InitBoard(0);
 
     SHOW_CURSOR();
     return 0;

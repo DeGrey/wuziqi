@@ -24,7 +24,6 @@ void InitBoard(int);
 void UpdateBoard(int col, int row, char *cr);
 
 void ProcessPressure(int);
-void IsPressurekey();
 
 void ProcessState(int,int,bool);
 
