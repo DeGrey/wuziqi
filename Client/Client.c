@@ -349,17 +349,17 @@ void isStartMatch(struct Msg_info Mi)
     Print(red, mg);
     fflush(stdout);
 
-    char ch;
-    do
-    {
-        ch = getchar();
-    } while (ch !='\n');
+    // char ch;
+    // do
+    // {
+    //     ch = getchar();
+    // } while (ch !='\n');
 
     // ch=getchar();
-    char s[2];
+    char s[20];
     scanf("%s",s);
     
-printf("ch:%s\n",s);
+printf("ch:%c\n",s[0]);
 return;
     struct Msg_info msg = {0};
     // if (s == 'y')
@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
 
     if (!contoserver("127.0.0.1", 2000))
     {
-        // return 0;
+        return 0;
     }
 
     printf("连接成功！\n正在分配ID...\n");
