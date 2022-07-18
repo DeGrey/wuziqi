@@ -238,7 +238,7 @@ void GetFromStdio()
     } while (ch != '\n');
 
     if (counter <= 6)
-         return;
+        return;
 
     buffer[counter - 1] = '\0';
 
@@ -376,6 +376,8 @@ void isStartMatch(struct Msg_info Mi)
     // isinCmd=true;
     if (isinCmd)
         printf("\n");
+    else
+        isinCmd = true;
 
     CLEAR();
     MOVETO(5, 0);
@@ -400,24 +402,25 @@ void isStartMatch(struct Msg_info Mi)
 
     return;
     struct Msg_info msg = {0};
-    // if (s == 'y')
-    //     MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "yes", 0, 0);
-    // else
-    //     MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "no", 0, 0);
+    if (ch == 'y')
+        MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "yes", 0, 0);
+    else
+        MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "no", 0, 0);
 
-    // SendToServer(msg);
+    SendToServer(msg);
 
-    // if(s=='y')
-    // {
-    //     setpng(true,true);
-    //     setturn(false);
-    //     InitBoard(Mi.socket_self);
-    // }
-    // else
-    // {
-    //     ismatch=false;
-    //     update_visible_list();
-    // }
+    if (ch == 'y')
+    {
+        setpng(true, true);
+        setturn(false);
+        InitBoard(Mi.socket_self);
+    }
+    else
+    {
+        ismatch = false;
+        isinCmd = false;
+        update_visible_list();
+    }
 }
 
 void ProcessMsg(void)
