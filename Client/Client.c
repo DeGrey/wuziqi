@@ -230,15 +230,16 @@ void GetFromStdio()
     do
     {
         ch = getchar();
-        // printf("111:%c\n",ch);
         if (isio)
-        {
-            // printf("111%c",ch);
             buffer[counter++] = ch;
-        }
+
         if (ch == 'i' || ch == 'I')
             isio = true;
     } while (ch != '\n');
+
+    if (counter <= 6)
+         return;
+
     buffer[counter - 1] = '\0';
 
     // printf("kkk%s\n", buffer);
@@ -372,7 +373,9 @@ void insertTOText(struct node *anode)
 void isStartMatch(struct Msg_info Mi)
 {
     ismatch = true;
-    isinCmd=true;
+    // isinCmd=true;
+    if (isinCmd)
+        printf("\n");
 
     CLEAR();
     MOVETO(5, 0);
@@ -391,9 +394,8 @@ void isStartMatch(struct Msg_info Mi)
 
     // ch=getchar();
 
-
     char ch;
-    ch=getchar();
+    ch = getchar();
     printf("ch:%c\n", ch);
 
     return;
