@@ -258,46 +258,18 @@ bool iscmd()
     Print(blue, "命令：");
     fflush(stdout);
 
-    // char ch;
-    // do
-    // {
-    //     ch = getchar();
-    // } while (ch != 'i' && ch != 'I');
 
     GetFromStdio();
 
-    //     //ch = getchar();
-    // char cah[100];
-    // fgets(cah, 100, stdin);
-    // char *ToPro = (char *)malloc(sizeof(char) * strlen(cah) + 1);
 
-    // strcpy(ToPro, cah);
-
-    // printf("%s\n", ToPro);
-    //  char cmd[100];
-    //  int obj = -1;
-    //  char msg[MAX_MSG_SIZE];
-
-    // scanf("%s %d %s", cmd, &obj, msg);
-
-    // while ((ch = getchar()) != '\n')
-    //     ;
-
-    // if (NOT_USED == socket_atServer)
-    //     continue;
-    // if (obj < 0)
-    //     continue;
-    //     MOVETO(11, 0);
-
-    // deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
+    //
+    deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
 
     pthread_mutex_unlock(&Visible_Msg_process);
 
-    update_visible_list();
-    // processinput(ToPro);
-    //  PreProcess(cmd, obj, msg);
-    //   update_visible_list();
-    //
+    if (!ismatch)
+        update_visible_list();
+
     return true;
 }
 
@@ -322,7 +294,8 @@ void inputCmd(int key)
         break;
     }
 
-    isinCmd = false;
+    if (!ismatch)
+        isinCmd = false;
 }
 
 void update_visible_list()
@@ -372,12 +345,10 @@ void insertTOText(struct node *anode)
 
 void isStartMatch(struct Msg_info Mi)
 {
+    while(isinCmd);
+
     ismatch = true;
-    // isinCmd=true;
-    if (isinCmd)
-        printf("\n");
-    else
-        isinCmd = true;
+    isinCmd = true;
 
     CLEAR();
     MOVETO(5, 0);
@@ -398,9 +369,10 @@ void isStartMatch(struct Msg_info Mi)
 
     char ch;
     ch = getchar();
-    printf("ch:%c\n", ch);
+    //printf("ch:%c\n", ch);
 
-    return;
+    //return;
+
     struct Msg_info msg = {0};
     if (ch == 'y')
         MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "yes", 0, 0);
@@ -428,6 +400,7 @@ void ProcessMsg(void)
     // printf("消息处理已开启\n");
     while (1)
     {
+        //while(isinCmd);
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
             // printf("收到消息了\n");
@@ -458,6 +431,7 @@ void ProcessMsg(void)
             case START_MATCH:
             {
                 isStartMatch(Msg_list->next->next->Msginfo);
+                break;
             }
             case MATCH_ACK:
             {
@@ -470,10 +444,12 @@ void ProcessMsg(void)
                 }
                 else
                 {
+                    //printf("对方以及拒绝\n");
                     Print(red, "对方已拒绝对局！一秒后回到大厅");
                     printf("\n");
                     ismatch = false;
-                    sleep(1);
+                    isinCmd=false;
+                    //sleep(1);
                     update_visible_list();
                 }
                 break;
