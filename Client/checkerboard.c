@@ -24,7 +24,7 @@ void InitBoard(int s_O)
     {
         for (int k = 0; k < BOARD_SIZE; k += 1)
         {
-            printf(" 🫐"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
+            printf(" ☀"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
         }
         if (i == 5 && !turn)
             printf("  状态：对方正在落棋");
@@ -225,7 +225,7 @@ void IsPressurekey(void)
     int fd = -1, ret = 0;
     struct input_event ie = {0};
     memset(&ie, 0, sizeof(struct input_event));
-    fd = open("/dev/input/event1", O_RDONLY);
+    fd = open("/dev/input/event4", O_RDONLY);
     if (fd < 0)
     {
         printf("键盘监听失败！\n");

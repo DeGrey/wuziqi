@@ -166,60 +166,86 @@ void deleteOneline(int x, int y, int len)
     fflush(stdout);
 }
 
-void processinput(char *allM)
+int getCmd(char *obj, char *allm, int location, int len)
 {
-
     int k = 0;
-    int len = strlen(allM) - 1;
-
-    while (*++allM != '\n')
+    for (int i = location; i < len; i++)
     {
-        if (*allM == ' ')
+        if (allm[i] != ' ')
+            *(obj + k++) = allm[i];
+        else
+            break;
+        location++;
+    }
+    *(obj + k) = '\0';
+
+    return ++location;
+}
+
+void processinput(char *allm)
+{
+    // printf("allM:%s\n", allm);
+    int len = strlen(allm);
+    int k = 0;
+    int location = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if (allm[i] == ' ')
             k++;
     }
-    // printf("k=%d\n", k);
-    if (k < 1)
+    if (k < 1 || k > 2)
+    {
         return;
-
-    char *cmd = (char *)malloc(sizeof(char));
-    int sok = 0;
-    char *data = (char *)malloc(sizeof(char));
-
-    *cmd-- = '\0';
-
-    if (k != 1)
-    {
-        *data-- = '\0';
-        while (*--allM != ' ')
-        {
-            *data-- = *allM;
-            len--;
-        }
-        data++;
     }
 
-    int p = 0;
-    while (*--allM != ' ')
+    char data[MAX_MSG_SIZE]; // = (char *)malloc(sizeof(char) * MAX_MSG_SIZE);
+    char cmd[11];            //= (char *)malloc(sizeof(char) * 10);
+    char sokt[4];            // = (char *)malloc(sizeof(char) * 10);
+
+    location = getCmd(cmd, allm, location, len);
+    location = getCmd(sokt, allm, location, len);
+    location = getCmd(data, allm, location, len);
+
+    int sok = 0, p = 0;
+    len = strlen(sokt);
+    for (int i = len - 1; i >= 0; i--)
     {
-        sok += ((int)(*allM - '0')) * pow(10, p);
+        sok += ((int)(sokt[i] - '0')) * pow(10, p);
         p++;
-        len--;
     }
 
-    if (k == 1)
-        len -= 1;
-    else
-        len -= 2;
-
-    while (len > 0)
-    {
-        *cmd-- = *--allM;
-        len--;
-    }
-    cmd++;
-    // printf("%s,%d,%s\n", cmd, sok, data);
+    // printf("last:%s,%d,%s\n", cmd, sok, data);
 
     PreProcess(cmd, sok, data);
+}
+
+void GetFromStdio()
+{
+    char buffer[MAX_MSG_SIZE];
+    char ch;
+    int counter = 0;
+    bool isio = false;
+
+    do
+    {
+        ch = getchar();
+        // printf("111:%c\n",ch);
+        if (isio)
+        {
+            // printf("111%c",ch);
+            buffer[counter++] = ch;
+        }
+        if (ch == 'i' || ch == 'I')
+            isio = true;
+    } while (ch != '\n');
+    buffer[counter - 1] = '\0';
+
+    // printf("kkk%s\n", buffer);
+    //  char* allm=(char*)malloc(sizeof(char)*200);
+    //  strcpy(allm,buffer);
+    //  printf("%s/n",allm);
+    processinput(buffer);
 }
 
 bool iscmd()
@@ -231,17 +257,21 @@ bool iscmd()
     Print(blue, "命令：");
     fflush(stdout);
 
-    char ch;
-    do
-    {
-        ch = getchar();
-    } while (ch != 'i' && ch != 'I');
+    // char ch;
+    // do
+    // {
+    //     ch = getchar();
+    // } while (ch != 'i' && ch != 'I');
 
-    char cah[100];
-    fgets(cah, 100, stdin);
-    char *ToPro = (char *)malloc(sizeof(char) * strlen(cah) + 1);
+    GetFromStdio();
 
-    strcpy(ToPro, cah);
+    //     //ch = getchar();
+    // char cah[100];
+    // fgets(cah, 100, stdin);
+    // char *ToPro = (char *)malloc(sizeof(char) * strlen(cah) + 1);
+
+    // strcpy(ToPro, cah);
+
     // printf("%s\n", ToPro);
     //  char cmd[100];
     //  int obj = -1;
@@ -258,27 +288,31 @@ bool iscmd()
     //     continue;
     //     MOVETO(11, 0);
 
-    deleteOneline(11, 0 /*7*/, 7 + strlen(ToPro) + 10 + 1 + 3 + 1);
+    // deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
 
     pthread_mutex_unlock(&Visible_Msg_process);
 
-    processinput(ToPro);
-    // PreProcess(cmd, obj, msg);
-    //  update_visible_list();
+    update_visible_list();
+    // processinput(ToPro);
+    //  PreProcess(cmd, obj, msg);
+    //   update_visible_list();
     //
     return true;
 }
 
 void inputCmd(int key)
 {
-    if (!HasInit||ismatch)
+    if (!HasInit || ismatch)
         return;
+
+    HIDE_INPUT;
     isinCmd = true;
 
     switch (key)
     {
     case 23:
     {
+
         iscmd();
         break;
     }
@@ -339,13 +373,12 @@ void isStartMatch(struct Msg_info Mi)
 {
     ismatch = true;
 
-
     CLEAR();
     MOVETO(5, 0);
     char mg[100];
     strcpy(mg, Mi.nickname);
     strcat(mg, " 邀请你下五子棋！（y/n）:");
-        //printf("start 0 match\n");
+    // printf("start 0 match\n");
     Print(red, mg);
     fflush(stdout);
 
@@ -357,10 +390,10 @@ void isStartMatch(struct Msg_info Mi)
 
     // ch=getchar();
     char s[20];
-    scanf("%s",s);
-    
-printf("ch:%c\n",s[0]);
-return;
+    scanf("%s", s);
+
+    printf("ch:%c\n", s[0]);
+    return;
     struct Msg_info msg = {0};
     // if (s == 'y')
     //     MakeMsg(&msg, MATCH_ACK, nickname, socket_atServer, Mi.socket_self, "yes", 0, 0);
@@ -420,18 +453,18 @@ void ProcessMsg(void)
             }
             case MATCH_ACK:
             {
-                if(0==strcmp(Msg_list->next->next->Msginfo.data,"yes"))
+                if (0 == strcmp(Msg_list->next->next->Msginfo.data, "yes"))
                 {
-                    ismatch=true;
-                    setpng(false,true);
+                    ismatch = true;
+                    setpng(false, true);
                     setturn(true);
                     InitBoard(Msg_list->next->next->Msginfo.socket_self);
                 }
                 else
                 {
-                    Print(red,"对方已拒绝对局！一秒后回到大厅。。。");
+                    Print(red, "对方已拒绝对局！一秒后回到大厅。。。");
                     printf("\n");
-                    ismatch=false;
+                    ismatch = false;
                     sleep(1);
                     update_visible_list();
                 }
@@ -466,11 +499,11 @@ void PreProcess(char *cmd, int socket_other, char *data)
     else if (0 == strcmp(cmd, "match"))
     {
         MakeMsg(&MsgInfo, START_MATCH, nickname, socket_atServer, socket_other, data, 0, 0);
-        ismatch=true;
+        ismatch = true;
         isinCmd = false;
         CLEAR();
-        MOVETO(0,0);
-        Print(red,"正在等待对局确认!");
+        MOVETO(0, 0);
+        Print(red, "正在等待对局确认!");
         printf("\n");
         fflush(stdout);
         // return;
@@ -530,7 +563,7 @@ int main(int argc, char *argv[])
 
     if (!contoserver("127.0.0.1", 2000))
     {
-        return 0;
+        // return 0;
     }
 
     printf("连接成功！\n正在分配ID...\n");
@@ -539,30 +572,14 @@ int main(int argc, char *argv[])
     pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    while (socket_atServer == 0)
-        ;
+    // while (socket_atServer == 0)
+    //     ;
 
     printf("ID分配成功！\n");
 
     printf("正在连接大厅...\n");
     printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
     HasInit = true;
-
-    // while (1)
-    // {
-
-    //     char cmd[100];
-    //     int obj = -1;
-    //     char msg[MAX_MSG_SIZE] = "";
-
-    //     scanf("%s %d %s", cmd, &obj, msg);//未完全消除错误命令输入的影响
-    //     if (NOT_USED == socket_atServer)
-    //         continue;
-    //     if (obj <0)
-    //         continue;
-
-    //     PreProcess(cmd, obj, msg);
-    // }
 
     pthread_join(thread_Recv, NULL);
     pthread_join(thread_proMsg, NULL);
