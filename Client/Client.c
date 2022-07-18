@@ -372,6 +372,7 @@ void insertTOText(struct node *anode)
 void isStartMatch(struct Msg_info Mi)
 {
     ismatch = true;
+    isinCmd=true;
 
     CLEAR();
     MOVETO(5, 0);
@@ -389,10 +390,12 @@ void isStartMatch(struct Msg_info Mi)
     // } while (ch !='\n');
 
     // ch=getchar();
-    char s[20];
-    scanf("%s", s);
 
-    printf("ch:%c\n", s[0]);
+
+    char ch;
+    ch=getchar();
+    printf("ch:%c\n", ch);
+
     return;
     struct Msg_info msg = {0};
     // if (s == 'y')
@@ -462,7 +465,7 @@ void ProcessMsg(void)
                 }
                 else
                 {
-                    Print(red, "对方已拒绝对局！一秒后回到大厅。。。");
+                    Print(red, "对方已拒绝对局！一秒后回到大厅");
                     printf("\n");
                     ismatch = false;
                     sleep(1);
