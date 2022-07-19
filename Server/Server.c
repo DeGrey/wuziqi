@@ -248,7 +248,7 @@ int main()
     pthread_mutex_init(&Msg_process, NULL);
     struct Msg_info Msg = {0};
 
-    if (!Server_init("127.0.0.1", 2000))
+    if (!Server_init(IP_ADDRESS, 2000))
         return 0;
 
     pthread_create(&processMsg, NULL, (void *)&ProcessMsg, NULL);

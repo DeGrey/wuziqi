@@ -12,6 +12,8 @@
 #include<errno.h>
 //#include<list>
 
+#define IP_ADDRESS "192.168.0.4"//"192.168.16.4"
+
 #define MAX_MSG_LIST 2000
 
 #define MAX_USER_NUMBER 200
@@ -24,6 +26,7 @@
 #define CHAT_TO_EB 103
 #define START_MATCH 104
 #define MATCH_ACK 105
+
 
 #define MATCH_SET_LOCATION 201
 
