@@ -175,45 +175,41 @@ void ProcessPressure(int key)
 
 void ProcessState(int rel_x, int rel_y, bool self_other)
 {
-    if (self_other)
-        turn = false;
+    // if (self_other)
+    //     turn = false;
+    // else
+    //     turn = true;
+
+    isTakeUp[rel_x][rel_y] = true;
+
+    if (!piece)
+        printf(" ⚫");
     else
-        turn = true;
-
-    isTakeUp[x][y] = true;
-
-    MOVETO(rel_x, rel_y);
-    if (self_other)
-    {
-        if (!piece)
-            printf(" ⚫");
-        else
-            printf(" ⚪");
-    }
-    else
-    {
-        if (!piece)
-            printf(" ⚪");
-        else
-            printf(" ⚫");
-    }
-
-    if (!self_other)
-    {
-        int temp_x = x, temp_y = y;
-        while (!isTakeUp[temp_x][temp_y])
-        {
-            temp_x++;
-            temp_x %= BOARD_SIZE;
-        }
-
-        x = temp_x;
-        y = temp_y;
-        MOVETO(temp_x, temp_y);
-        printf(" 😃");
-    }
-
+        printf(" ⚪");
     MOVELEFT(3);
+
+    while (isTakeUp[rel_x][rel_y])
+    {
+        rel_y++;
+
+        if (rel_y > BOARD_SIZE - 1)
+        {
+
+            MOVEUP(20);
+            continue;
+        }
+        MOVEDOWN(1);
+    }
+
+
+
+    x = rel_x;
+    y = rel_y;
+
+
+    printf(" 😃");
+    MOVELEFT(3);
+
     fflush(stdout);
 }
 
