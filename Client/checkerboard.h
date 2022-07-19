@@ -16,7 +16,7 @@
 //#include <gpm.h>
 
 
-
+#define KEY_DEVICE  "/dev/input/event4"//"/dev/input/event1"
 #define BOARD_SIZE 20
 
 

@@ -263,7 +263,7 @@ bool iscmd()
 
 
     //
-    deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
+    //deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
 
     pthread_mutex_unlock(&Visible_Msg_process);
 
@@ -424,7 +424,7 @@ void ProcessMsg(void)
                     socket_atServer = Msg_list->next->next->Msginfo.socket_other;
                     Msg_list->next->next->Msginfo.type = ID_ACK;
                     SendToServer(Msg_list->next->next->Msginfo);
-                    printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
+                    //printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
                 }
                 break;
             }
@@ -523,6 +523,9 @@ void checkCur(void)
 
 int main(int argc, char *argv[])
 {
+    // SHOW_CURSOR();
+    // return 0;
+    
     CLEAR();
     MOVETO(0, 0);
     fflush(stdout);
@@ -545,9 +548,10 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&Msg_process, NULL);
     pthread_mutex_init(&Visible_Msg_process, NULL);
 
-    if (!contoserver("127.0.0.1", 2000))
+    if (!contoserver(IP_SERVER, 2000))
     {
-        // return 0;
+        UN_HIDE_INPUT;
+        return 0;
     }
 
     printf("连接成功！\n正在分配ID...\n");
@@ -556,13 +560,20 @@ int main(int argc, char *argv[])
     pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, NULL);
     pthread_create(&thread_proMsg, NULL, (void *)&ProcessMsg, NULL);
 
-    // while (socket_atServer == 0)
-    //     ;
+    while (socket_atServer == 0)
+        ;
 
+    
     printf("ID分配成功！\n");
 
     printf("正在连接大厅...\n");
-    printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
+    sleep(2);
+    //printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
+
+    struct Msg_info tongzhi={0};
+    MakeMsg(&tongzhi,CHAT_TO_EB,nickname,socket_atServer,0,"已进入大厅！",0,0);
+    SendToServer(tongzhi);
+    
     HasInit = true;
 
     pthread_join(thread_Recv, NULL);

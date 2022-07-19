@@ -226,7 +226,7 @@ void IsPressurekey(void)
     int fd = -1, ret = 0;
     struct input_event ie = {0};
     memset(&ie, 0, sizeof(struct input_event));
-    fd = open("/dev/input/event1", O_RDONLY);
+    fd = open(KEY_DEVICE, O_RDONLY);
     if (fd < 0)
     {
         printf("键盘监听失败！\n");

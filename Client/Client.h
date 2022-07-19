@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <math.h>
 
+#define IP_SERVER "120.48.1.142"//120.48.78.30
 
 #define MAX_USER_NUMBER 200
 #define MAX_MSG_SIZE 200
