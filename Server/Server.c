@@ -150,7 +150,8 @@ void WaitForUser(void *param)
 
 void ProcessMsg(void)
 {
-
+    struct node *anode = {0};
+    anode = Msg_list->next->next;
     while (1)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)

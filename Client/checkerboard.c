@@ -5,7 +5,7 @@ int x = 0, y = 0;
 extern char *nickname;
 extern int socket_atServer;
 int socket_other = 0;
-bool turn = true, piece = false, isforgame = false;
+bool turn = true, piece = false, isforgame = true;
 bool isTakeUp[20][20] = {false};
 
 void InitBoard(int s_O)
@@ -48,8 +48,8 @@ void InitBoard(int s_O)
     MOVETO(0, 0);
     printf(" 😃");
     MOVETO(0, 0);
-    
-    HIDE_CURSOR();
+
+    // HIDE_CURSOR();
 
     system("stty -echo");
     fflush(stdout);
@@ -62,14 +62,14 @@ void InitBoard(int s_O)
     //  UpdateBoard(10,15,"😃");
 }
 
-void setpng(bool pi,bool g)
+void setpng(bool pi, bool g)
 {
     piece = pi;
-    isforgame=g;
+    isforgame = g;
 }
 void setturn(bool t)
 {
-    turn=t;
+    turn = t;
 }
 
 void ProcessPressure(int key)
@@ -80,7 +80,7 @@ void ProcessPressure(int key)
     {
     case 17:
     {
-        if (--y < 0 || isTakeUp[x][y])
+        if (--y < 0 || isTakeUp[y][x])
         {
             y++;
             break;
@@ -100,7 +100,7 @@ void ProcessPressure(int key)
 
     case 31:
     {
-        if (++y > 19 || isTakeUp[x][y])
+        if (++y > 19 || isTakeUp[y][x])
         {
             y--;
             break;
@@ -120,7 +120,7 @@ void ProcessPressure(int key)
 
     case 30:
     {
-        if (--x < 0 || isTakeUp[x][y])
+        if (--x < 0 || isTakeUp[y][x])
         {
             x++;
             break;
@@ -140,7 +140,7 @@ void ProcessPressure(int key)
 
     case 32:
     {
-        if (++x > 19 || isTakeUp[x][y])
+        if (++x > 19 || isTakeUp[y][x])
         {
             x--;
             break;
@@ -161,9 +161,9 @@ void ProcessPressure(int key)
     {
         ProcessState(x, y, true);
 
-        struct Msg_info MsgInfo = {0};
-        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
-        SendToServer(MsgInfo);
+        // struct Msg_info MsgInfo = {0};
+        // MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
+        // SendToServer(MsgInfo);
     }
 
     default:
@@ -175,49 +175,84 @@ void ProcessPressure(int key)
 
 void ProcessState(int rel_x, int rel_y, bool self_other)
 {
-    // if (self_other)
-    //     turn = false;
-    // else
-    //     turn = true;
+    if (isTakeUp[rel_y][rel_x])
+        return;
+        
+    if (self_other)
+        turn = false;
 
-    isTakeUp[rel_x][rel_y] = true;
+    isTakeUp[rel_y][rel_x] = true;
 
-    if (!piece)
-        printf(" ⚫");
+    if (!self_other)
+    {
+        int x_dif = rel_x - x;
+        int y_dif = rel_y - y;
+
+        if (x_dif > 0)
+            MOVERIGHT(x_dif * 3);
+        else
+            MOVELEFT(-x_dif * 3);
+        if (y_dif > 0)
+            MOVEDOWN(y_dif);
+        else
+            MOVEUP(-y_dif);
+        x = rel_x;
+        y = rel_y;
+    }
+
+    if (self_other)
+    {
+        if (!piece)
+            printf(" ⚫");
+        else
+            printf(" ⚪");
+    }
     else
-        printf(" ⚪");
+    {
+        if (!piece)
+            printf(" ⚪");
+        else
+            printf(" ⚫");
+    }
     MOVELEFT(3);
 
-    while (isTakeUp[rel_x][rel_y])
+    if (self_other)
+    {
+        struct Msg_info MsgInfo = {0};
+        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
+        SendToServer(MsgInfo);
+    }
+
+    // if (rel_x == x && rel_y == y)
+    // {
+    while (isTakeUp[rel_y][rel_x])
     {
         rel_y++;
 
         if (rel_y > BOARD_SIZE - 1)
         {
-
-            MOVEUP(20);
+            rel_y = 0;
+            MOVEUP(20 - 1);
             continue;
         }
         MOVEDOWN(1);
     }
 
-
-
     x = rel_x;
     y = rel_y;
 
-
     printf(" 😃");
     MOVELEFT(3);
+    // }
 
     fflush(stdout);
+
+    if (!self_other)
+        turn = true;
 }
 
 void IsPressurekey(void)
 {
-
-    // while (1)
-    // {
     int times = 0;
     int fd = -1, ret = 0;
     struct input_event ie = {0};
@@ -246,9 +281,10 @@ void IsPressurekey(void)
 
             if (ie.value > 0)
             {
+                // printf("anle \n");
                 if (!isforgame && ie.value == 1)
                     inputCmd(ie.code);
-                else if(isforgame)
+                else if (isforgame)
                     ProcessPressure(ie.code);
             }
 
@@ -259,5 +295,4 @@ void IsPressurekey(void)
         }
     }
     close(fd);
-    //}
 }

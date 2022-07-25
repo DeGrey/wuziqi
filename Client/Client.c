@@ -258,12 +258,10 @@ bool iscmd()
     Print(blue, "命令：");
     fflush(stdout);
 
-
     GetFromStdio();
 
-
     //
-    //deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
+    // deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
 
     pthread_mutex_unlock(&Visible_Msg_process);
 
@@ -345,7 +343,8 @@ void insertTOText(struct node *anode)
 
 void isStartMatch(struct Msg_info Mi)
 {
-    while(isinCmd);
+    while (isinCmd)
+        ;
 
     ismatch = true;
     isinCmd = true;
@@ -369,9 +368,9 @@ void isStartMatch(struct Msg_info Mi)
 
     char ch;
     ch = getchar();
-    //printf("ch:%c\n", ch);
+    // printf("ch:%c\n", ch);
 
-    //return;
+    // return;
 
     struct Msg_info msg = {0};
     if (ch == 'y')
@@ -398,9 +397,11 @@ void isStartMatch(struct Msg_info Mi)
 void ProcessMsg(void)
 {
     // printf("消息处理已开启\n");
+    struct node* anode={0};
     while (1)
     {
-        //while(isinCmd);
+        // while(isinCmd);
+        anode=Msg_list->next->next;
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
             // printf("收到消息了\n");
@@ -424,7 +425,7 @@ void ProcessMsg(void)
                     socket_atServer = Msg_list->next->next->Msginfo.socket_other;
                     Msg_list->next->next->Msginfo.type = ID_ACK;
                     SendToServer(Msg_list->next->next->Msginfo);
-                    //printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
+                    // printf("ID分配成功\n%s(ID：%d)  \n", nickname, Msg_list->next->next->Msginfo.socket_other);
                 }
                 break;
             }
@@ -444,14 +445,19 @@ void ProcessMsg(void)
                 }
                 else
                 {
-                    //printf("对方以及拒绝\n");
+                    // printf("对方以及拒绝\n");
                     Print(red, "对方已拒绝对局！一秒后回到大厅");
                     printf("\n");
                     ismatch = false;
-                    isinCmd=false;
-                    //sleep(1);
+                    isinCmd = false;
+                    // sleep(1);
                     update_visible_list();
                 }
+                break;
+            }
+            case MATCH_SET_LOCATION:
+            {
+                ProcessState(anode->Msginfo.x,anode->Msginfo.y,false);
                 break;
             }
 
@@ -523,10 +529,10 @@ void checkCur(void)
 
 int main(int argc, char *argv[])
 {
-    // SHOW_CURSOR();
+    SHOW_CURSOR();
     // return 0;
-    //hhhhhhhhh
-    
+    // hhhhhhhhh
+
     CLEAR();
     MOVETO(0, 0);
     fflush(stdout);
@@ -546,6 +552,12 @@ int main(int argc, char *argv[])
     pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
     pthread_create(&checkCurs, NULL, (void *)&checkCur, NULL);
 
+    InitBoard(0);
+    while (1)
+    {
+        /* code */
+    }
+
     pthread_mutex_init(&Msg_process, NULL);
     pthread_mutex_init(&Visible_Msg_process, NULL);
 
@@ -564,17 +576,16 @@ int main(int argc, char *argv[])
     while (socket_atServer == 0)
         ;
 
-    
     printf("ID分配成功！\n");
 
     printf("正在连接大厅...\n");
     sleep(2);
-    //printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
+    // printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
 
-    struct Msg_info tongzhi={0};
-    MakeMsg(&tongzhi,CHAT_TO_EB,nickname,socket_atServer,0,"已进入大厅！",0,0);
+    struct Msg_info tongzhi = {0};
+    MakeMsg(&tongzhi, CHAT_TO_EB, nickname, socket_atServer, 0, "已进入大厅！", 0, 0);
     SendToServer(tongzhi);
-    
+
     HasInit = true;
 
     pthread_join(thread_Recv, NULL);
