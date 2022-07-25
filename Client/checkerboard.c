@@ -5,7 +5,7 @@ int x = 0, y = 0;
 extern char *nickname;
 extern int socket_atServer;
 int socket_other = 0;
-bool turn = true, piece = false, isforgame = true;
+bool turn = true, piece = false, isforgame = false;
 bool isTakeUp[20][20] = {false};
 
 void InitBoard(int s_O)
@@ -74,8 +74,10 @@ void setturn(bool t)
 
 void ProcessPressure(int key)
 {
+
     if (!turn)
         return;
+            //printf("按了%d\n",key);
     switch (key)
     {
     case 17:
@@ -177,11 +179,26 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 {
     if (isTakeUp[rel_y][rel_x])
         return;
-        
+
     if (self_other)
         turn = false;
 
     isTakeUp[rel_y][rel_x] = true;
+
+    if (!self_other)
+    {
+        printf(" 🫐");
+        MOVELEFT(3);
+    }
+
+    if (self_other)
+    {
+        struct Msg_info MsgInfo = {0};
+   printf("%d,%d\n",x,y);
+        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
+        SendToServer(MsgInfo);
+    }
+
 
     if (!self_other)
     {
@@ -215,13 +232,6 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
             printf(" ⚫");
     }
     MOVELEFT(3);
-
-    if (self_other)
-    {
-        struct Msg_info MsgInfo = {0};
-        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
-        SendToServer(MsgInfo);
-    }
 
     // if (rel_x == x && rel_y == y)
     // {

@@ -397,11 +397,12 @@ void isStartMatch(struct Msg_info Mi)
 void ProcessMsg(void)
 {
     // printf("消息处理已开启\n");
-    struct node* anode={0};
+    struct node *anode = {0};
+    anode = Msg_list->next->next;
     while (1)
     {
         // while(isinCmd);
-        anode=Msg_list->next->next;
+
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
         {
             // printf("收到消息了\n");
@@ -457,7 +458,8 @@ void ProcessMsg(void)
             }
             case MATCH_SET_LOCATION:
             {
-                ProcessState(anode->Msginfo.x,anode->Msginfo.y,false);
+                printf("受到了他们的侮辱,%d,%d\n",Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y);
+                //ProcessState(Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y, false);
                 break;
             }
 
@@ -529,9 +531,9 @@ void checkCur(void)
 
 int main(int argc, char *argv[])
 {
-    SHOW_CURSOR();
-    // return 0;
-    // hhhhhhhhh
+    // SHOW_CURSOR();
+    // // return 0;
+    // // hhhhhhhhh
 
     CLEAR();
     MOVETO(0, 0);
@@ -552,11 +554,11 @@ int main(int argc, char *argv[])
     pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
     pthread_create(&checkCurs, NULL, (void *)&checkCur, NULL);
 
-    InitBoard(0);
-    while (1)
-    {
-        /* code */
-    }
+    // InitBoard(0);
+    // while (1)
+    // {
+    //     /* code */
+    // }
 
     pthread_mutex_init(&Msg_process, NULL);
     pthread_mutex_init(&Visible_Msg_process, NULL);
