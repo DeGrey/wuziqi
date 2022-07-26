@@ -6,7 +6,8 @@ extern char *nickname;
 extern int socket_atServer;
 int socket_other = 0;
 bool turn = true, piece = false, isforgame = false;
-bool isTakeUp[20][20] = {false};
+int piece;
+int isTakeUp[20][20] = {0};
 
 void InitBoard(int s_O)
 {
@@ -77,12 +78,12 @@ void ProcessPressure(int key)
 
     if (!turn)
         return;
-            //printf("按了%d\n",key);
+    // printf("按了%d\n",key);
     switch (key)
     {
     case 17:
     {
-        if (--y < 0 || isTakeUp[y][x])
+        if (--y < 0 || isTakeUp[y][x].isTakeUp)
         {
             y++;
             break;
@@ -102,7 +103,7 @@ void ProcessPressure(int key)
 
     case 31:
     {
-        if (++y > 19 || isTakeUp[y][x])
+        if (++y > 19 || isTakeUp[y][x].isTakeUp)
         {
             y--;
             break;
@@ -122,7 +123,7 @@ void ProcessPressure(int key)
 
     case 30:
     {
-        if (--x < 0 || isTakeUp[y][x])
+        if (--x < 0 || isTakeUp[y][x].isTakeUp)
         {
             x++;
             break;
@@ -142,7 +143,7 @@ void ProcessPressure(int key)
 
     case 32:
     {
-        if (++x > 19 || isTakeUp[y][x])
+        if (++x > 19 || isTakeUp[y][x].isTakeUp)
         {
             x--;
             break;
@@ -174,16 +175,28 @@ void ProcessPressure(int key)
     break;
     }
 }
+bool isMatchEnd(int rel_x, int rel_y,bool self_other)
+{
+    int num=1;
+    int temp_x=rel_x,temp_y=rel_y;
+    int i=0,k=0;
+
+    while(rel_x-i<0||rel_x+k<20)
+    {
+        if(isTakeUp[rel_y][rel_x-++i].isTakeUp)
+        
+    }
+}
 
 void ProcessState(int rel_x, int rel_y, bool self_other)
 {
-    if (isTakeUp[rel_y][rel_x])
+    if (isTakeUp[rel_y][rel_x].isTakeUp)
         return;
 
     if (self_other)
         turn = false;
 
-    isTakeUp[rel_y][rel_x] = true;
+    isTakeUp[rel_y][rel_x].isTakeUp = true;
 
     if (!self_other)
     {
@@ -191,14 +204,18 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
         MOVELEFT(3);
     }
 
+    if (piece)
+        isTakeUp[rel_y][rel_x].piece = true;
+    else
+        isTakeUp[rel_y][rel_x].piece = false;
+
     if (self_other)
     {
         struct Msg_info MsgInfo = {0};
-        //printf("%d,%d\n",x,y);
+        // printf("%d,%d\n",x,y);
         MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
         SendToServer(MsgInfo);
     }
-
 
     if (!self_other)
     {
