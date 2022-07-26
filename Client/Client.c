@@ -41,6 +41,9 @@ void MakeMsg(struct Msg_info *Msg, int type, char *nickname, int socket_self, in
     strcpy(Msg->nickname, nickname);
     strcpy(Msg->data, data);
 
+    Msg->x = x;
+    Msg->y = y;
+
     return;
 }
 
@@ -458,8 +461,8 @@ void ProcessMsg(void)
             }
             case MATCH_SET_LOCATION:
             {
-                printf("受到了他们的侮辱,%d,%d\n",Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y);
-                //ProcessState(Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y, false);
+                //printf("%d,%d\n", Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y);
+                ProcessState(Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y, false);
                 break;
             }
 

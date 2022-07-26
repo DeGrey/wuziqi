@@ -194,7 +194,7 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
     if (self_other)
     {
         struct Msg_info MsgInfo = {0};
-   printf("%d,%d\n",x,y);
+        //printf("%d,%d\n",x,y);
         MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
         SendToServer(MsgInfo);
     }

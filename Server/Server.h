@@ -12,7 +12,7 @@
 #include<errno.h>
 //#include<list>
 
-#define IP_ADDRESS "192.168.0.4"//"192.168.16.4"
+#define IP_ADDRESS /*"192.168.0.4"*/ /*"192.168.16.4"*/ "127.0.0.1" 
 
 #define MAX_MSG_LIST 2000
 
@@ -62,6 +62,8 @@ void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int soc
     Msg->socket_self=socket_self;
     strcpy(Msg->nickname,nickname);
     strcpy(Msg->data,data);
+    Msg->x=x;
+    Msg->y=y;
 
     return ;
 }
