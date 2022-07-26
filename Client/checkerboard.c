@@ -5,8 +5,8 @@ int x = 0, y = 0;
 extern char *nickname;
 extern int socket_atServer;
 int socket_other = 0;
-bool turn = true, piece = false, isforgame = false;
-int piece;
+bool turn = true, /*piece = false,**/ isforgame = false;
+int piece = 0;
 int isTakeUp[20][20] = {0};
 
 void InitBoard(int s_O)
@@ -63,7 +63,7 @@ void InitBoard(int s_O)
     //  UpdateBoard(10,15,"😃");
 }
 
-void setpng(bool pi, bool g)
+void setpng(int pi, bool g)
 {
     piece = pi;
     isforgame = g;
@@ -83,7 +83,7 @@ void ProcessPressure(int key)
     {
     case 17:
     {
-        if (--y < 0 || isTakeUp[y][x].isTakeUp)
+        if (--y < 0 || isTakeUp[y][x] > 0)
         {
             y++;
             break;
@@ -103,7 +103,7 @@ void ProcessPressure(int key)
 
     case 31:
     {
-        if (++y > 19 || isTakeUp[y][x].isTakeUp)
+        if (++y > 19 || isTakeUp[y][x] > 0)
         {
             y--;
             break;
@@ -123,7 +123,7 @@ void ProcessPressure(int key)
 
     case 30:
     {
-        if (--x < 0 || isTakeUp[y][x].isTakeUp)
+        if (--x < 0 || isTakeUp[y][x] > 0)
         {
             x++;
             break;
@@ -143,7 +143,7 @@ void ProcessPressure(int key)
 
     case 32:
     {
-        if (++x > 19 || isTakeUp[y][x].isTakeUp)
+        if (++x > 19 || isTakeUp[y][x] > 0)
         {
             x--;
             break;
@@ -175,28 +175,46 @@ void ProcessPressure(int key)
     break;
     }
 }
-bool isMatchEnd(int rel_x, int rel_y,bool self_other)
+bool isMatchEnd(int rel_x, int rel_y)
 {
-    int num=1;
-    int temp_x=rel_x,temp_y=rel_y;
-    int i=0,k=0;
+    int num = 1;
+    int temp_x = rel_x, temp_y = rel_y;
+    int i = 0, k = 0;
 
-    while(rel_x-i<0||rel_x+k<20)
+    bool isEnd1 = false, isEnd2 = false;
+    while (rel_x - i >= 0 || rel_x + k < 20)
     {
-        if(isTakeUp[rel_y][rel_x-++i].isTakeUp)
-        
+        if (rel_x - ++i < 0)
+            isEnd1 = true;
+        if (rel_x + ++k >= 20)
+            isEnd2 = true;
+            
+        if (!isEnd1 && isTakeUp[rel_y][rel_x - i] == piece)
+            num++;
+        else
+            isEnd1 = true;
+
+        if (!isEnd2 && isTakeUp[rel_y][rel_x + k] == piece)
+            num++;
+        else
+            isEnd2 = true;
+
+        if (num == 5)
+            return true;
     }
+
+    return false;
 }
 
 void ProcessState(int rel_x, int rel_y, bool self_other)
 {
-    if (isTakeUp[rel_y][rel_x].isTakeUp)
+    if (isTakeUp[rel_y][rel_x] > 0)
         return;
 
     if (self_other)
         turn = false;
 
-    isTakeUp[rel_y][rel_x].isTakeUp = true;
+    isTakeUp[rel_y][rel_x] = piece;
 
     if (!self_other)
     {
@@ -204,16 +222,25 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
         MOVELEFT(3);
     }
 
-    if (piece)
-        isTakeUp[rel_y][rel_x].piece = true;
-    else
-        isTakeUp[rel_y][rel_x].piece = false;
+    // if (piece)
+    //     isTakeUp[rel_y][rel_x].piece = true;
+    // else
+    //     isTakeUp[rel_y][rel_x].piece = false;
 
     if (self_other)
     {
         struct Msg_info MsgInfo = {0};
-        // printf("%d,%d\n",x,y);
-        MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
+        if (isMatchEnd)
+        {
+            MakeMsg(&MsgInfo, MATCH_END, nickname, socket_atServer, socket_other, "", x, y);
+            CLEAR();
+            MOVETO(5, 0);
+            printf("\t\t\t\t对局胜利！2s后回到大厅\n");
+            sleep(2);
+            update_visible_list();
+        }
+        else
+            MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
         SendToServer(MsgInfo);
     }
 
@@ -236,14 +263,14 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 
     if (self_other)
     {
-        if (!piece)
+        if (piece == 1)
             printf(" ⚫");
         else
             printf(" ⚪");
     }
     else
     {
-        if (!piece)
+        if (piece == 1)
             printf(" ⚪");
         else
             printf(" ⚫");
@@ -252,7 +279,7 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 
     // if (rel_x == x && rel_y == y)
     // {
-    while (isTakeUp[rel_y][rel_x])
+    while (isTakeUp[rel_y][rel_x] > 0)
     {
         rel_y++;
 

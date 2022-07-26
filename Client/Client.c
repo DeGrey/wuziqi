@@ -385,7 +385,7 @@ void isStartMatch(struct Msg_info Mi)
 
     if (ch == 'y')
     {
-        setpng(true, true);
+        setpng(2, true);
         setturn(false);
         InitBoard(Mi.socket_self);
     }
@@ -443,7 +443,7 @@ void ProcessMsg(void)
                 if (0 == strcmp(Msg_list->next->next->Msginfo.data, "yes"))
                 {
                     ismatch = true;
-                    setpng(false, true);
+                    setpng(1, true);
                     setturn(true);
                     InitBoard(Msg_list->next->next->Msginfo.socket_self);
                 }
@@ -461,8 +461,19 @@ void ProcessMsg(void)
             }
             case MATCH_SET_LOCATION:
             {
-                //printf("%d,%d\n", Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y);
+                // printf("%d,%d\n", Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y);
                 ProcessState(Msg_list->next->next->Msginfo.x, Msg_list->next->next->Msginfo.y, false);
+                break;
+            }
+            case MATCH_END:
+            {
+                CLEAR();
+                MOVETO(5, 0);
+                printf("\t\t\t\t对局失败! 2s后回到大厅\n");
+                sleep(2);
+                ismatch = false;
+                isinCmd = false;
+                update_visible_list();
                 break;
             }
 

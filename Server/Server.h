@@ -29,7 +29,7 @@
 
 
 #define MATCH_SET_LOCATION 201
-
+#define MATCH_END 202
 
 pthread_mutex_t  Msg_process;
 
