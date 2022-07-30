@@ -21,17 +21,17 @@ void Recv_Msg(int handle_socket, char *Msg, int len)
     while (offset < len)
     {
         res = recv(handle_socket, Msg + offset, len - offset, flag);
-        printf("recv.res：%d\n",res);
-        // if (() < 0)
-        // {
-        //     printf("小于0了\n");
-        //     if (er == EINTR)
-        //         return;
-        //     else
-        //     {
-        //         ReleaseSocket(handle_socket);
-        //     }
-        // }
+        //printf("res:%d,offset:%d\n",res,offset);
+        if (res == 0)
+        {
+            printf("er:%d,enter:%d\n",er,EINTR);
+            // if (er == EINTR)
+            //     return;
+            // else
+            // {
+            //     ReleaseSocket(handle_socket);
+            // }
+        }
         offset += res;
     }
 }

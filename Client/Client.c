@@ -202,9 +202,9 @@ void processinput(char *allm)
         return;
     }
 
-    char data[MAX_MSG_SIZE]; 
-    char cmd[11];            
-    char sokt[4];            
+    char data[MAX_MSG_SIZE];
+    char cmd[11];
+    char sokt[4];
 
     location = getCmd(cmd, allm, location, len);
     location = getCmd(sokt, allm, location, len);
@@ -275,11 +275,12 @@ void inputCmd(int key)
     if (!HasInit || ismatch)
         return;
 
+    HIDE_INPUT;
     switch (key)
     {
     case 23:
     {
-        HIDE_INPUT;
+
         isinCmd = true;
         iscmd();
         break;
@@ -548,7 +549,7 @@ void checkCur(void)
 
 int main(int argc, char *argv[])
 {
-    // SHOW_CURSOR();
+    SHOW_CURSOR();
     // // return 0;
     // // hhhhhhhhh
 
@@ -571,17 +572,13 @@ int main(int argc, char *argv[])
     pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
     pthread_create(&checkCurs, NULL, (void *)&checkCur, NULL);
 
-    // InitBoard(0);
-    // while (1)
-    // {
-    //     /* code */
-    // }
 
     pthread_mutex_init(&Msg_process, NULL);
     pthread_mutex_init(&Visible_Msg_process, NULL);
 
     if (!contoserver(IP_SERVER, 2000))
     {
+        isinCmd=true;
         UN_HIDE_INPUT;
         return 0;
     }
@@ -598,7 +595,8 @@ int main(int argc, char *argv[])
     printf("ID分配成功！\n");
 
     printf("正在连接大厅...\n");
-    sleep(2);
+
+    //sleep(2);
     // printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
 
     struct Msg_info tongzhi = {0};
