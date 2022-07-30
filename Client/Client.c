@@ -471,8 +471,10 @@ void ProcessMsg(void)
                 MOVETO(5, 0);
                 printf("\t\t\t\t对局失败! 2s后回到大厅\n");
                 sleep(2);
+                setpng(false,false);
                 ismatch = false;
                 isinCmd = false;
+                SHOW_CURSOR();
                 update_visible_list();
                 break;
             }
@@ -523,6 +525,13 @@ void PreProcess(char *cmd, int socket_other, char *data)
 
     SendToServer(MsgInfo);
 }
+
+void setmnc(bool m,bool c)
+{
+    ismatch=m;
+    isinCmd=c;
+}
+
 void checkCur(void)
 {
     int times = 0;

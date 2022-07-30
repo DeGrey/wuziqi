@@ -100,8 +100,9 @@ void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int soc
 //     return ;
 // }
 
-void setpng(bool pi,bool g);
+void setpng(int pi,bool g);
 void setturn(bool);
+void setmnc(bool,bool);
 
 struct Text_info
 {
