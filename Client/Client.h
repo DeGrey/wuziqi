@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define IP_SERVER "127.0.0.1"/*"120.48.1.142"*///120.48.78.30
+#define IP_SERVER /*"127.0.0.1"*/"120.48.1.142"//120.48.78.30
 
 #define MAX_USER_NUMBER 200
 #define MAX_MSG_SIZE 200
@@ -68,7 +68,6 @@
 struct Msg_info
 {
     int type;
-    //int len;
     char  nickname[MAX_MSG_SIZE];
     int socket_self;
     int socket_other;
@@ -88,17 +87,7 @@ void isStartMatch(struct Msg_info);
 
 
 void MakeMsg(struct Msg_info *Msg,int type,char*nickname,int socket_self,int socket_other,char* data,int x,int y);
-// {
-//     Msg->type=type;
-//     //Msg->nickname=nickname;
-//     Msg->socket_other=socket_other;
-//     Msg->socket_self=socket_self;
 
-//     strcpy(Msg->nickname,nickname);
-//     strcpy(Msg->data,data);
-
-//     return ;
-// }
 
 void setpng(int pi,bool g);
 void setturn(bool);

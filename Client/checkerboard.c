@@ -7,15 +7,13 @@ extern int socket_atServer;
 int socket_other = 0;
 bool turn = true, /*piece = false,**/ isforgame = false;
 int piece = 0;
-int isTakeUp[20][20] = {0};
+int isTakeUp[BOARD_SIZE][BOARD_SIZE];
 
 void InitBoard(int s_O)
 {
     socket_other = s_O;
-
-    // struct winsize Wsize;
-    // ioctl(STDIN_FILENO, TIOCGWINSZ, &Wsize);
-    // printf("col:%d\trow:%d\n",Wsize.ws_col,Wsize.ws_row);
+    x = 0;
+    y = 0;
 
     CLEAR();
     MOVETO(0, 0);
@@ -25,6 +23,7 @@ void InitBoard(int s_O)
     {
         for (int k = 0; k < BOARD_SIZE; k += 1)
         {
+            isTakeUp[i][k] = 0;
             printf(" 🫐"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
         }
         if (i == 5 && !turn)
@@ -54,13 +53,9 @@ void InitBoard(int s_O)
 
     system("stty -echo");
     fflush(stdout);
-    // MOVETO(10, 10*3-1);
-    // printf("⚪");
-    // fflush(stdout);
-    // HIDE_CURSOR();
+
     //  printf("╋ 🫐 ➕ ✧ ◯ ➕ 😃 😄 ⚫ ⚪ ☀ ☼ ☺ ☻ ◆ ◇ ♔ ♚ ♖ ♜ ♛ ♕\n");
-    // UpdateBoard(10,10,"🫐");
-    //  UpdateBoard(10,15,"😃");
+
 }
 
 void setpng(int pi, bool g)
@@ -163,80 +158,53 @@ void ProcessPressure(int key)
     case 28:
     {
         ProcessState(x, y, true);
+        break;
 
-        // struct Msg_info MsgInfo = {0};
-        // MakeMsg(&MsgInfo, MATCH_SET_LOCATION, nickname, socket_atServer, socket_other, "", x, y);
-        // SendToServer(MsgInfo);
+    }
     }
 
-    default:
-    {
-    }
-    break;
-    }
 }
 bool isMatchEnd(int rel_x, int rel_y)
 {
     int num, i;
-    // int temp_x = rel_x, temp_y = rel_y;
+
 
     i = 1, num = 1;
     while (isTakeUp[rel_y][rel_x - i++] == piece && rel_x - i - 1 >= 0)
-        if (++num == 5)
-            return true;
+        num++;
     i = 1;
     while (isTakeUp[rel_y][rel_x + i++] == piece && rel_x + i - 1 < 20)
-        if (++num == 5)
-            return true;
+        num++;
+    if (num == 5)
+        return true;
 
     i = 1, num = 1;
     while (isTakeUp[rel_y - i++][rel_x] == piece && rel_y - i - 1 >= 0)
-        if (++num == 5)
-            return true;
+        num++;
     i = 1;
     while (isTakeUp[rel_y + i++][rel_x] == piece && rel_y + i - 1 < 20)
-        if (++num == 5)
-            return true;
+        num++;
+    if (num == 5)
+        return true;
 
     i = 1, num = 1;
     while (isTakeUp[rel_y - i][rel_x - i++] == piece && rel_y - i - 1 >= 0 && rel_x - i - 1 >= 0)
-        if (++num == 5)
-            return true;
+        num++;
     i = 1;
     while (isTakeUp[rel_y + i][rel_x + i++] == piece && rel_y + i - 1 < 20 && rel_x + i - 1 < 20)
-        if (++num == 5)
-            return true;
+        num++;
+    if (num == 5)
+        return true;
 
     i = 1, num = 1;
     while (isTakeUp[rel_y + i][rel_x - i++] == piece && rel_y + i - 1 < 20 && rel_x - i - 1 >= 0)
-        if (++num == 5)
-            return true;
+        num++;
     i = 1;
     while (isTakeUp[rel_y - i][rel_x + i++] == piece && rel_y - i - 1 >= 0 && rel_x + i - 1 < 20)
-        if (++num == 5)
-            return true;
+        num++;
+    if (num == 5)
+        return true;
 
-    // bool isEnd1 = false, isEnd2 = false;
-    // while (rel_x - i >= 0 || rel_x + k < 20)
-    // {
-    //     if (rel_x - ++i < 0)
-    //         isEnd1 = true;
-    //     if (rel_x + ++k >= 20)
-    //         isEnd2 = true;
-
-    //     if (!isEnd1 && isTakeUp[rel_y][rel_x - i] == piece)
-    //         num++;
-    //     else
-    //         isEnd1 = true;
-
-    //     if (!isEnd2 && isTakeUp[rel_y][rel_x + k] == piece)
-    //         num++;
-    //     else
-    //         isEnd2 = true;
-
-    //     if (num == 5)
-    //         return true;
-    // }
 
     return false;
 }
@@ -249,18 +217,18 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
     if (self_other)
         turn = false;
 
-    isTakeUp[rel_y][rel_x] = piece;
+    if (self_other)
+        isTakeUp[rel_y][rel_x] = piece;
+    else if (!self_other && piece == 1)
+        isTakeUp[rel_y][rel_x] = 2;
+    else if (!self_other && piece == 2)
+        isTakeUp[rel_y][rel_x] = 1;
 
     if (!self_other)
     {
         printf(" 🫐");
         MOVELEFT(3);
     }
-
-    // if (piece)
-    //     isTakeUp[rel_y][rel_x].piece = true;
-    // else
-    //     isTakeUp[rel_y][rel_x].piece = false;
 
     if (self_other)
     {
@@ -270,11 +238,14 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
             isforgame = false;
 
             MakeMsg(&MsgInfo, MATCH_END, nickname, socket_atServer, socket_other, "", x, y);
+            SendToServer(MsgInfo);
+
             CLEAR();
             MOVETO(5, 0);
             printf("\t\t\t\t对局胜利！2s后回到大厅\n");
             sleep(2);
-            setmnc(false,false);
+
+            setmnc(false, false);
             SHOW_CURSOR();
             update_visible_list();
             return;
@@ -292,14 +263,12 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 
         if (x_dif > 0)
             MOVERIGHT(x_dif * 3);
-        else
+        else if (x_dif < 0)
             MOVELEFT(-x_dif * 3);
         if (y_dif > 0)
             MOVEDOWN(y_dif);
-        else
+        else if (y_dif < 0)
             MOVEUP(-y_dif);
-        x = rel_x;
-        y = rel_y;
     }
 
     if (self_other)
@@ -318,8 +287,6 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
     }
     MOVELEFT(3);
 
-    // if (rel_x == x && rel_y == y)
-    // {
     while (isTakeUp[rel_y][rel_x] > 0)
     {
         rel_y++;
@@ -338,7 +305,6 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 
     printf(" 😃");
     MOVELEFT(3);
-    // }
 
     fflush(stdout);
 

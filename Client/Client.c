@@ -202,9 +202,9 @@ void processinput(char *allm)
         return;
     }
 
-    char data[MAX_MSG_SIZE]; // = (char *)malloc(sizeof(char) * MAX_MSG_SIZE);
-    char cmd[11];            //= (char *)malloc(sizeof(char) * 10);
-    char sokt[4];            // = (char *)malloc(sizeof(char) * 10);
+    char data[MAX_MSG_SIZE]; 
+    char cmd[11];            
+    char sokt[4];            
 
     location = getCmd(cmd, allm, location, len);
     location = getCmd(sokt, allm, location, len);
@@ -223,7 +223,7 @@ void processinput(char *allm)
     PreProcess(cmd, sok, data);
 }
 
-void GetFromStdio()
+void GetFromStdin()
 {
     char buffer[MAX_MSG_SIZE];
     char ch;
@@ -245,10 +245,6 @@ void GetFromStdio()
 
     buffer[counter - 1] = '\0';
 
-    // printf("kkk%s\n", buffer);
-    //  char* allm=(char*)malloc(sizeof(char)*200);
-    //  strcpy(allm,buffer);
-    //  printf("%s/n",allm);
     processinput(buffer);
 }
 
@@ -261,7 +257,7 @@ bool iscmd()
     Print(blue, "命令：");
     fflush(stdout);
 
-    GetFromStdio();
+    GetFromStdin();
 
     //
     // deleteOneline(11, 0 /*7*/, 7 + /*strlen(ToPro)*/80 + 10 + 1 + 3 + 1);
@@ -279,14 +275,12 @@ void inputCmd(int key)
     if (!HasInit || ismatch)
         return;
 
-    HIDE_INPUT;
-    isinCmd = true;
-
     switch (key)
     {
     case 23:
     {
-
+        HIDE_INPUT;
+        isinCmd = true;
         iscmd();
         break;
     }
@@ -471,7 +465,7 @@ void ProcessMsg(void)
                 MOVETO(5, 0);
                 printf("\t\t\t\t对局失败! 2s后回到大厅\n");
                 sleep(2);
-                setpng(false,false);
+                setpng(1, false);
                 ismatch = false;
                 isinCmd = false;
                 SHOW_CURSOR();
@@ -506,6 +500,8 @@ void PreProcess(char *cmd, int socket_other, char *data)
 
     else if (0 == strcmp(cmd, "match"))
     {
+        if (socket_other == socket_atServer)
+            return;
         MakeMsg(&MsgInfo, START_MATCH, nickname, socket_atServer, socket_other, data, 0, 0);
         ismatch = true;
         isinCmd = false;
@@ -514,7 +510,6 @@ void PreProcess(char *cmd, int socket_other, char *data)
         Print(red, "正在等待对局确认!");
         printf("\n");
         fflush(stdout);
-        // return;
     }
 
     else
@@ -526,14 +521,15 @@ void PreProcess(char *cmd, int socket_other, char *data)
     SendToServer(MsgInfo);
 }
 
-void setmnc(bool m,bool c)
+void setmnc(bool m, bool c)
 {
-    ismatch=m;
-    isinCmd=c;
+    ismatch = m;
+    isinCmd = c;
 }
 
 void checkCur(void)
 {
+    // return;
     int times = 0;
     while (1)
     {
