@@ -13,7 +13,7 @@
 //#include <tcp.h>
 
 
-#define IP_ADDRESS "192.168.0.4" /*"192.168.16.4"*/ /*"127.0.0.1"*/ 
+#define IP_ADDRESS /*"192.168.0.4" *//*"192.168.16.4"*/ "127.0.0.1" 
 
 #define MAX_MSG_LIST 2000
 
@@ -27,20 +27,23 @@
 #define CHAT_TO_EB 103
 #define START_MATCH 104
 #define MATCH_ACK 105
+#define SERVER_FULL 106
 
 
 #define MATCH_SET_LOCATION 201
 #define MATCH_END 202
 
-pthread_mutex_t  Msg_process;
+pthread_mutex_t  Msg_process,id_change;
 
 
 struct User_info
 {
     int handle_socket;
     int port;
-    char *address;
+    char address[20];
     bool SetID;
+    bool isAlive;
+    int id;
 };
 
 struct Msg_info
