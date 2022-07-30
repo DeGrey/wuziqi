@@ -394,8 +394,6 @@ void isStartMatch(struct Msg_info Mi)
 void ProcessMsg(void)
 {
     // printf("消息处理已开启\n");
-    struct node *anode = {0};
-    anode = Msg_list->next->next;
     while (1)
     {
         // while(isinCmd);

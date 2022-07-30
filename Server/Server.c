@@ -7,9 +7,9 @@ pthread_t thread_accept;
 int id = 0, M_D_list = 0;
 bool Send_ID = false;
 
-void ReleaseSocket()
+void ReleaseSocket(int sk)
 {
-    printf("连接一段开\n");
+    printf("连接%d已断开\n",sk);
 }
 
 void Recv_Msg(int handle_socket, char *Msg, int len)
@@ -20,16 +20,18 @@ void Recv_Msg(int handle_socket, char *Msg, int len)
     int er = errno;
     while (offset < len)
     {
-        if ((res = recv(handle_socket, Msg + offset, len - offset, flag)) < 0)
-        {
-            printf("小于0了\n");
-            if (er == EINTR)
-                return;
-            else
-            {
-                ReleaseSocket();
-            }
-        }
+        res = recv(handle_socket, Msg + offset, len - offset, flag);
+        printf("recv.res：%d\n",res);
+        // if (() < 0)
+        // {
+        //     printf("小于0了\n");
+        //     if (er == EINTR)
+        //         return;
+        //     else
+        //     {
+        //         ReleaseSocket(handle_socket);
+        //     }
+        // }
         offset += res;
     }
 }
@@ -74,18 +76,6 @@ void Send_Msg(int handle_socket, char *Msg, int len)
     }
 }
 
-// void SendToClient(struct Msg_info MsgInfo)//(char *data, int socket_self, int type,int socket_other,char*nickname)
-// {
-//     // struct Msg_info MsgInfo = {0};
-//     // MsgInfo.type = type;
-//     // //MsgInfo.len = len;
-//     // MsgInfo.socket_self=socket_self;
-//     // MsgInfo.socket_other = socket_other;
-//     // MsgInfo.nickname=nickname;
-//     // strcpy(MsgInfo.data, data);
-
-//     Send_Msg(MsgInfo.socket_other, (char *)&MsgInfo, sizeof(struct Msg_info));
-// }
 void isalive()
 {
 }
@@ -95,15 +85,10 @@ void SendaMsg(bool SenDtype, struct Msg_info MsgInfo)
     if (SenDtype)
     {
         for (int i = 0; i < id; i++)
-        {
-            // SendToClient(MsgInfo);
             Send_Msg(UsersInfo[i].handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
-        }
     }
     else
-    {
         Send_Msg(MsgInfo.socket_other, (char *)&MsgInfo, sizeof(struct Msg_info));
-    }
 }
 
 void SetID(void *param)
@@ -111,11 +96,9 @@ void SetID(void *param)
     struct User_info *U_I = (struct User_info *)param;
     while (!U_I->SetID)
     {
-        // int ssocket_set = (int)(long)param;
         struct Msg_info Msg = {0};
         MakeMsg(&Msg, SET_ID, "system(0)", 0, U_I->handle_socket, "setid", 0, 0);
         SendaMsg(false, Msg);
-        // printf("发送了setid\n");
     }
     // printf("ID set sucessed\n");
 }
@@ -150,8 +133,7 @@ void WaitForUser(void *param)
 
 void ProcessMsg(void)
 {
-    struct node *anode = {0};
-    anode = Msg_list->next->next;
+
     while (1)
     {
         if (Msg_list->next->next->Msginfo.type != NOT_USED)
