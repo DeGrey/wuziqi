@@ -84,14 +84,8 @@ void Send_Msg(char *Msg, int len)
     }
 }
 
-void SendToServer(struct Msg_info MsgInfo) //(char *data, int socket_self, int type,int socket_other)
+void SendToServer(struct Msg_info MsgInfo) 
 {
-    // struct Msg_info MsgInfo = {0};
-    // MsgInfo.type = type;
-    // MsgInfo.socket_self=socket_self;
-    // MsgInfo.socket_other=socket_other;
-    // MsgInfo.nickname = nickname;
-    // strcpy(MsgInfo.data, data);
     Send_Msg((char *)&MsgInfo, sizeof(struct Msg_info));
 }
 
@@ -596,8 +590,8 @@ int main(int argc, char *argv[])
 
     printf("正在连接大厅...\n");
 
-    //sleep(2);
-    // printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
+    sleep(2);
+    printf("%s(ID:%d)已进入大厅\n", nickname, socket_atServer);
 
     struct Msg_info tongzhi = {0};
     MakeMsg(&tongzhi, CHAT_TO_EB, nickname, socket_atServer, 0, "已进入大厅！", 0, 0);
@@ -609,7 +603,6 @@ int main(int argc, char *argv[])
     pthread_join(thread_proMsg, NULL);
     pthread_join(checkPrs, NULL);
 
-    // InitBoard(0);
 
     SHOW_CURSOR();
     return 0;

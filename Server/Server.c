@@ -1,45 +1,44 @@
 #include "Server.h"
 
-struct User_info *UsersInfo[MAX_USER_NUMBER];
-// struct Msg_info MsgInfoData[MAX_MSG_LIST]={{NOT_USED}};
+// struct User_info *UsersInfo[MAX_USER_NUMBER];
+//  struct Msg_info MsgInfoData[MAX_MSG_LIST]={{NOT_USED}};
 pthread_t thread_accept;
 // pthread_t thread_Recv[MAX_USER_NUMBER];
 int id = 0, max_id = 1;
 bool Send_ID = false, server_full = false;
 
-void ReleaseSocket(struct User_info *user)
+void ReleaseSocket(struct User_list *anode)
 {
-    user->isAlive = false;
+    anode->U_I.isAlive = false;
 
-    pthread_mutex_lock(&id_change);
-    if (server_full)
-    {
+    printf("用户%d的socket已关闭！\n", anode->U_I.handle_socket);
 
-        id = user->id;
-        server_full = false;
-    }
-    pthread_mutex_unlock(&id_change);
-
-    printf("用户%d已经离开！\n", user->handle_socket);
-    close(user->handle_socket);
-    free(user);
+    close(anode->U_I.handle_socket);
 }
 
-void Recv_Msg(struct User_info *user, char *Msg, int len)
+void Recv_Msg(struct User_list *anode, char *Msg, int len)
 {
 
     int offset = 0, res = 0;
     long flag = 0;
 
+    // printf("正在接受%d的消息\n", anode->U_I.handle_socket);
     while (offset < len)
     {
-        res = recv(user->handle_socket, Msg + offset, len - offset, flag);
-        // printf("res:%d,offset:%d\n",res,offset);
-        int times = 0;
-        if (res == 0 && times++ == 0)
+
+        res = recv(anode->U_I.handle_socket, Msg + offset, len - offset, flag);
+
+        strerror(errno);
+        if (res == 0)
         {
+            // printf("这是erroor：%d\n", errno);
             if (errno != EINTR)
-                ReleaseSocket(user);
+            {
+                ReleaseSocket(anode);
+                return;
+            }
+            else
+                break;
         }
         offset += res;
     }
@@ -48,17 +47,17 @@ void Recv_Msg(struct User_info *user, char *Msg, int len)
 void RecvFmClient(void *param)
 {
     struct Msg_info MsgInfo = {0};
-    struct User_info *user = (struct User_info *)param;
-    printf("用户%d的消息接收线程已启动！\n", user->handle_socket);
+    struct User_list *anode = (struct User_list *)param;
+    printf("用户%d的消息接收线程已启动！\n", anode->U_I.handle_socket);
 
-    while (user->isAlive)
+    while (anode->U_I.isAlive)
     {
         memset(&MsgInfo, 0, sizeof(MsgInfo));
-        Recv_Msg(user, (char *)&MsgInfo, sizeof(struct Msg_info));
+        Recv_Msg(anode, (char *)&MsgInfo, sizeof(struct Msg_info));
 
         if (MsgInfo.type != NOT_USED)
         {
-            printf("recv 用户%d：%s\n", MsgInfo.socket_self, MsgInfo.data);
+            //printf("recv 用户%d：%s\n", MsgInfo.socket_self, MsgInfo.data);
 
             struct node *anode = (struct node *)malloc(sizeof(struct node));
             anode->Msginfo = MsgInfo;
@@ -68,7 +67,12 @@ void RecvFmClient(void *param)
             pthread_mutex_unlock(&Msg_process);
         }
     }
-    printf("用户%d的消息接收线程已                  关闭！\n", user->handle_socket);
+
+    printf("用户%d的消息接收线程已关闭！\n", anode->U_I.handle_socket);
+
+    pthread_mutex_lock(&user_change);
+    UL_delet(anode);
+    pthread_mutex_unlock(&user_change);
 }
 
 void Send_Msg(int handle_socket, char *Msg, int len)
@@ -91,10 +95,10 @@ void SendaMsg(bool SenDtype, struct Msg_info MsgInfo)
 {
     if (SenDtype)
     {
-        for (int i = 0; i < max_id; i++)
+        for (struct User_list *i = UsersInfo->next; i != NULL; i = i->next)
         {
-            if (UsersInfo[i]->isAlive)
-                Send_Msg(UsersInfo[i]->handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
+            if (i->U_I.isAlive)
+                Send_Msg(i->U_I.handle_socket, (char *)&MsgInfo, sizeof(struct Msg_info));
         }
     }
     else
@@ -103,34 +107,30 @@ void SendaMsg(bool SenDtype, struct Msg_info MsgInfo)
 
 void SetID(void *param)
 {
-    struct User_info *U_I = (struct User_info *)param;
-    while (!U_I->SetID)
+    struct User_list *anode = (struct User_list *)param;
+    while (!anode->U_I.SetID)
     {
         // printf("setid\n");
         struct Msg_info Msg = {0};
-        MakeMsg(&Msg, SET_ID, "system(0)", 0, U_I->handle_socket, "setid", 0, 0);
+        MakeMsg(&Msg, SET_ID, "system(0)", 0, anode->U_I.handle_socket, "setid", 0, 0);
         SendaMsg(false, Msg);
     }
-    printf("用户%d的 ID set sucessed\n", U_I->handle_socket);
+    printf("用户%d的 ID set sucessed\n", anode->U_I.handle_socket);
 }
 
 void WaitForUser(void *param)
 {
     long socket_handle = (long)param;
-    pthread_t thread_Recv, setid;
+
     while (1)
     {
-
+        pthread_t thread_Recv, setid;
         struct sockaddr_in Ip_port;
         unsigned int whattouse;
         memset(&Ip_port, 0, sizeof(struct sockaddr_in));
 
-        if (!server_full)
-        {
-            UsersInfo[id] = (struct User_info *)malloc(sizeof(struct User_info));
-            memset(UsersInfo[id], 0, sizeof(struct User_info));
-            //UsersInfo[id]->address = (char *)malloc(sizeof(20));
-        }
+        struct User_list *anode = (struct User_list *)malloc(sizeof(struct User_list));
+        memset(&anode->U_I, 0, sizeof(struct User_info));
 
         int fffd = -1;
         if (-1 == (fffd = accept(socket_handle, (struct sockaddr *)&Ip_port, &whattouse)))
@@ -139,52 +139,30 @@ void WaitForUser(void *param)
             continue;
         }
 
-        if (server_full)
+        anode->U_I.handle_socket = fffd;
+        anode->U_I.port = Ip_port.sin_port;
+
+        int leng = strlen(inet_ntoa(Ip_port.sin_addr));
+        for (int i = 0; i < leng; i++)
         {
-            printf("服务器已满！");
-            struct Msg_info mif = {0};
-            MakeMsg(&mif, SERVER_FULL, "system", 0, fffd, "", 0, 0);
-            SendaMsg(false, mif);
-            close(fffd);
-            continue;
+            anode->U_I.address[i] = inet_ntoa(Ip_port.sin_addr)[i];
         }
+        anode->U_I.address[leng] = '\0';
+        // printf("%s\n", anode->U_I.address);
 
-        UsersInfo[id]->handle_socket = fffd;
-        UsersInfo[id]->port = Ip_port.sin_port;
-
-        printf("wwwwwwhat\n");
-        //strcpy((char *)(UsersInfo[id])->address, inet_ntoa(Ip_port.sin_addr));
-        int leng=strlen(inet_ntoa(Ip_port.sin_addr));
-        for(int i=0;i<leng;i++)
-        {
-            UsersInfo[id]->address[i]=inet_ntoa(Ip_port.sin_addr)[i];
-        }
-         UsersInfo[id]->address[leng]='\0';
-         printf( "%s\n",UsersInfo[id]->address);
-
-        UsersInfo[id]->SetID = false;
-        UsersInfo[id]->isAlive = true;
-        UsersInfo[id]->id = id;
+        anode->U_I.SetID = false;
+        anode->U_I.isAlive = true;
+        // anode->U_I.id = id;
 
         // printf("用户%d已连接，handle为：%d,address为：%s,port:%d\n", id-1, UsersInfo[id-1].handle_socket,UsersInfo[id-1].address,Ip_port.sin_port);
-        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)UsersInfo[id]);
-        pthread_create(&setid, NULL, (void *)&SetID, (void *)UsersInfo[id]);
+        pthread_create(&thread_Recv, NULL, (void *)&RecvFmClient, (void *)anode);
+        pthread_create(&setid, NULL, (void *)&SetID, (void *)anode);
+        anode->U_I.thread_Recv = thread_Recv;
 
-        int num = 0, temp_id = id;
-        do
-        {
-            id++;
-            id %= MAX_USER_NUMBER;
-            if (num++ == MAX_USER_NUMBER)
-            {
-                server_full = true;
-                max_id = MAX_USER_NUMBER;
-                break;
-            }
-            max_id = id > temp_id ? id : temp_id + 1;
-        } while (UsersInfo[id]->isAlive);
+        pthread_mutex_lock(&user_change);
+        UL_add(anode);
+        pthread_mutex_unlock(&user_change);
 
-        // printf("client(%d)已连接  id:%d",UsersInfo[id-1].handle_socket ,id-1);
     }
 }
 
@@ -216,12 +194,12 @@ void ProcessMsg(void)
             {
                 // Send_ID = true;
                 // printf("受到了 %d 的ID确认\n", Msg_list->next->next->Msginfo.socket_other);
-                for (int i = 0; i < max_id; i++)
+                for (struct User_list *i = UsersInfo->next; i != NULL; i = i->next)
                 {
-                    if (UsersInfo[i]->isAlive && UsersInfo[i]->handle_socket == Msg_list->next->next->Msginfo.socket_other)
+                    if (i->U_I.isAlive && i->U_I.handle_socket == Msg_list->next->next->Msginfo.socket_other)
                     {
                         // printf("用户%d成功设置id标志位！\n",UsersInfo[i]->handle_socket );
-                        UsersInfo[i]->SetID = true;
+                        i->U_I.SetID = true;
                         break;
                     }
                 }
@@ -287,6 +265,7 @@ bool Server_init(char *address, int port)
 int main()
 {
     list_init();
+    UL_init();
     // for(int i=0;i<MAX_USER_NUMBER;i++)
     // {
     //     UsersInfo[i]=(struct User_info*)malloc(sizeof(struct User_info));
@@ -295,7 +274,7 @@ int main()
 
     pthread_t processMsg;
     pthread_mutex_init(&Msg_process, NULL);
-    pthread_mutex_init(&id_change, NULL);
+    pthread_mutex_init(&user_change, NULL);
 
     struct Msg_info Msg = {0};
 
