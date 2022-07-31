@@ -24,7 +24,7 @@ void InitBoard(int s_O)
         for (int k = 0; k < BOARD_SIZE; k += 1)
         {
             isTakeUp[i][k] = 0;
-            printf(" 💠"); //◯☀☼☺☻◆◇♔♚♖♜♛♕
+            printf(BOROAD_STYLE); //◯☀☼☺☻◆◇♔♚♖♜♛♕
         }
         // if (i == 5 && !turn)
         //     printf("  状态：对方正在落棋");
@@ -84,7 +84,7 @@ void ProcessPressure(int key)
             break;
         }
 
-        printf(" 🫐");
+        printf(BOROAD_STYLE);
         MOVELEFT(3);
 
         MOVEUP(1);
@@ -104,7 +104,7 @@ void ProcessPressure(int key)
             break;
         }
 
-        printf(" 🫐");
+        printf(BOROAD_STYLE);
         MOVELEFT(3);
 
         MOVEDOWN(1);
@@ -124,7 +124,7 @@ void ProcessPressure(int key)
             break;
         }
 
-        printf(" 🫐");
+        printf(BOROAD_STYLE);
         MOVELEFT(3);
 
         MOVELEFT(3);
@@ -144,7 +144,7 @@ void ProcessPressure(int key)
             break;
         }
 
-        printf(" 🫐");
+        printf(BOROAD_STYLE);
         MOVELEFT(3);
 
         MOVERIGHT(3);
@@ -226,7 +226,7 @@ void ProcessState(int rel_x, int rel_y, bool self_other)
 
     if (!self_other)
     {
-        printf(" 🫐");
+        printf(BOROAD_STYLE);
         MOVELEFT(3);
     }
 

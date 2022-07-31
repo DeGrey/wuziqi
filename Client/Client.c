@@ -547,8 +547,8 @@ int main(int argc, char *argv[])
     // // return 0;
     // // hhhhhhhhh
 
-    InitBoard(0);
-    while(1);
+    // InitBoard(0);
+    // while(1);
 
     CLEAR();
     MOVETO(0, 0);
