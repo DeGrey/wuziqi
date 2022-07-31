@@ -6,4 +6,6 @@ linux终端在线五子棋小游戏
 
 命令格式：commnd ID （Data）
   
-  commnd:chat/match (match不需要Data)；
+commnd:chat/match (match不需要Data)；
+
+注：服务器常在线
