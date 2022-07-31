@@ -29,7 +29,7 @@
 #define MATCH_SET_LOCATION 201
 #define MATCH_END 202
 
-#define Print(a,b) printf("\033[%dm%s\033[0m",a,b)
+#define Print(/*color*/a,/*data*/b) printf("\033[%dm%s\033[0m",a,b)
 // a
 #define black 30
 #define red 31
@@ -97,6 +97,7 @@ void setmnc(bool,bool);
 struct Text_info
 {
     char data[MAX_MSG_SIZE];
+    int handle;
     int type;
 };
 

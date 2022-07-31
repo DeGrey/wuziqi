@@ -84,7 +84,7 @@ void Send_Msg(char *Msg, int len)
     }
 }
 
-void SendToServer(struct Msg_info MsgInfo) 
+void SendToServer(struct Msg_info MsgInfo)
 {
     Send_Msg((char *)&MsgInfo, sizeof(struct Msg_info));
 }
@@ -313,7 +313,10 @@ void update_visible_list()
             continue;
         if (Text[i].type == CHAT_TO_SB)
         {
-            Print(green, Text[i].data);
+            if (Text[i].handle != socket_atServer)
+                Print(green, Text[i].data);
+            else
+                Print(yellow, Text[i].data);
             printf("\n");
             continue;
         }
@@ -326,10 +329,11 @@ void update_visible_list()
 void insertTOText(struct node *anode)
 {
     strcpy(Text[Text_num].data, Setdata(anode->Msginfo.nickname, anode->Msginfo.socket_self, anode->Msginfo.data));
-    Text[Text_num++].type = anode->Msginfo.type;
+    Text[Text_num].type = anode->Msginfo.type;
+    Text[Text_num++].handle = anode->Msginfo.socket_self;
     Text_num %= 10;
 
-    if (!ismatch)
+    if (!ismatch && !isinCmd)
         update_visible_list();
 }
 
@@ -346,23 +350,11 @@ void isStartMatch(struct Msg_info Mi)
     char mg[100];
     strcpy(mg, Mi.nickname);
     strcat(mg, " 邀请你下五子棋！（y/n）:");
-    // printf("start 0 match\n");
     Print(red, mg);
     fflush(stdout);
 
-    // char ch;
-    // do
-    // {
-    //     ch = getchar();
-    // } while (ch !='\n');
-
-    // ch=getchar();
-
     char ch;
     ch = getchar();
-    // printf("ch:%c\n", ch);
-
-    // return;
 
     struct Msg_info msg = {0};
     if (ch == 'y')
@@ -488,7 +480,15 @@ void PreProcess(char *cmd, int socket_other, char *data)
             MakeMsg(&MsgInfo, CHAT_TO_EB, nickname, socket_atServer, socket_other, data, 0, 0);
 
         else
+        {
+            if (socket_other == socket_atServer)
+                return;
             MakeMsg(&MsgInfo, CHAT_TO_SB, nickname, socket_atServer, socket_other, data, 0, 0);
+            struct node *anode = (struct node *)malloc(sizeof(struct node));
+            anode->Msginfo = MsgInfo;
+            insertTOText(anode);
+            // free(anode);
+        }
     }
 
     else if (0 == strcmp(cmd, "match"))
@@ -566,13 +566,12 @@ int main(int argc, char *argv[])
     pthread_create(&checkPrs, NULL, (void *)&IsPressurekey, NULL);
     pthread_create(&checkCurs, NULL, (void *)&checkCur, NULL);
 
-
     pthread_mutex_init(&Msg_process, NULL);
     pthread_mutex_init(&Visible_Msg_process, NULL);
 
     if (!contoserver(IP_SERVER, 2000))
     {
-        isinCmd=true;
+        isinCmd = true;
         UN_HIDE_INPUT;
         return 0;
     }
@@ -602,7 +601,6 @@ int main(int argc, char *argv[])
     pthread_join(thread_Recv, NULL);
     pthread_join(thread_proMsg, NULL);
     pthread_join(checkPrs, NULL);
-
 
     SHOW_CURSOR();
     return 0;
