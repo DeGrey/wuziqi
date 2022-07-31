@@ -8,4 +8,4 @@ linux终端在线五子棋小游戏
   
 commnd:chat/match (match不需要Data)；
 
-注：服务器常在线
+
