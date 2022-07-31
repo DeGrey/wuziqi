@@ -10,9 +10,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <errno.h>
-//#include <tcp.h>
 
-#define IP_ADDRESS "192.168.0.4" /*"192.168.16.4"*/ /*"127.0.0.1"*/
+#define IP_ADDRESS "127.0.0.1"
 
 #define MAX_MSG_LIST 2000
 
