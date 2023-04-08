@@ -8,6 +8,6 @@ linux终端在线五子棋小游戏
 
 [可省略]
 
-commnd:chat/match；
+commnd:chat/match
 
 
